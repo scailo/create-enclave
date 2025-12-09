@@ -1,0 +1,42 @@
+{
+  "name": "@kernelminds/create-enclave",
+  "version": "0.0.1",
+  "description": "🚀 The official Scailo starter framework. Instantly scaffold a complete, dependency-ready starter project that could be deployed as an application or a widget on Scailo.",
+  "main": "index.js",
+  "repository": "https://github.com/scailo/create-enclave",
+  "author": "Pratheek Adidela",
+  "license": "Apache-2.0",
+  "private": false,
+  "bin": {
+    "create-enclave": "./bin/create-enclave.js",
+    "@kernelminds/create-enclave": "./bin/create-enclave.js"
+  },
+  "files": [
+    ".vscode",
+    "img",
+    "server",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "npx tsc --watch",
+    "build": "npx tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@fastify/http-proxy": "^11.3.0",
+    "@fastify/static": "^8.2.0",
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^24.6.2",
+    "@types/semver": "^7.7.1",
+    "adm-zip": "^0.5.16",
+    "fastify": "^5.6.1",
+    "semver": "^7.7.2",
+    "yaml": "^2.8.1"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.8.6",
+    "@kernelminds/scailo-sdk": "^0.1.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,128 @@
+✔ npx create-enclave @done(25-10-04 14:58)
+    ✔ Setup the following @done(25-10-04 14:58)
+        ✔ tailwind @done(25-10-04 03:44)
+        ✔ daisyui @done(25-10-04 03:44)
+        ✔ .vscode @done(25-10-04 03:03)
+        ✔ resources folder @done(25-10-04 03:40)
+            ✔ dist @done(25-10-04 03:40)
+                ✔ css @done(25-10-04 03:40)
+                ✔ img @done(25-10-04 03:40)
+                ✔ js @done(25-10-04 03:40)
+            ✔ src @done(25-10-04 03:40)
+                ✔ ts @done(25-10-04 03:40)
+                ✔ css @done(25-10-04 03:40)
+        ✔ .gitignore @done(25-10-04 03:06)
+            ✔ node_modules/ @done(25-10-04 03:06)
+            ✔ .env @done(25-10-04 03:06)
+            ✔ tsconfig.tsbuildinfo @done(25-10-04 03:06)
+            ✔ .DS_Store @done(25-10-04 03:06)
+        ✔ Download the default scailo logo from R2 and save it within the resources/dist/img folder as logo @done(25-10-04 05:48)
+        ✔ index.html @done(25-10-04 06:40)
+            ✔ Integrate bundle.src.min.js with version @done(25-10-04 06:40)
+            ✔ Integrate bundle.min.css with version @done(25-10-04 06:40)
+        ✔ MANIFEST.yaml @done(25-10-04 07:24)
+            ✔ Integrate the logo @done(25-10-04 07:24)
+        ✔ package.json @done(25-10-04 04:08)
+        ✔ server.ts @done(25-10-04 08:37)
+            ✔ This should serve as a proxy to the API @done(25-10-04 08:37)
+            ✔ This could be used while building @done(25-10-04 08:37)
+            ✔ Implement a bare bones server API with fastify integration @done(25-10-04 08:37)
+                ✔ Read from the .env file @done(25-10-04 08:37)
+                ✔ Login using credentials for 24 hours @done(25-10-04 08:37)
+                ✔ Serve the index.html file at "/" @done(25-10-04 08:37)
+        ✔ .env file @done(25-10-04 08:37)
+            ✔ This should have local credentials for proxying requests while building @done(25-10-04 08:37)
+            ✔ Store the server_url @done(25-10-04 08:37)
+            ✔ Store the username @done(25-10-04 08:37)
+            ✔ Store the password @done(25-10-04 08:37)
+
+✔ Configure the create script to accept the name of the application and the identifier @done(25-10-04 15:16)
+    ✔ Configure package.json version as well? @done(25-10-04 15:19)
+✔ Also, during packaging, the latest version number is required @done(25-10-04 18:10)
+    ✔ This is the version number that will be setup in the MANIFEST.yaml file @done(25-10-04 18:09)
+        ✔ Parse the manifest file @done(25-10-04 18:09)
+        ✔ Show current version @done(25-10-04 18:09)
+        ✔ Show next version by upgrading the patch number for auto selection @done(25-10-04 18:09)
+        ✔ Show final version confirmation @done(25-10-04 18:09)
+        ✔ Update MANIFEST file with the new version @done(25-10-04 18:09)
+    ✔ npm package @done(25-10-04 18:10)
+        ✔ This has to be a separate file since it will ask for user's input in the form of version @done(25-10-04 18:09)
+        ✔ Ask for version @done(25-10-04 18:09)
+        ✔ Use this version and increment the version in MANIFEST as well @done(25-10-04 18:09)
+            ✔ This is mandatory, so all GiX apps would have a new version each time they are being packaged @done(25-10-04 18:09)
+        ✔ Do not copy the .env file @critical @done(25-10-04 18:09)
+
+✔ Write a README file @done(25-10-05 00:02)
+    ✔ In dev @done(25-10-04 20:08)
+        ✔ Write about configuration of the .env file @done(25-10-04 20:08)
+        ✔ Write about how to run server.ts, in order to help in building the application @done(25-10-04 20:08)
+        ✔ The index.html file is rendered on "/" @done(25-10-04 20:08)
+        ✔ The entry point of the TS part is app.ts @done(25-10-04 20:08)
+        ✔ The CSS bundle is generated from app.css, and the bundle is bundle.css @done(25-10-04 20:08)
+    ✔ In production -> the application assumes the rights of the user who executed the application @done(25-10-04 20:08)
+
+    ✔ Write how to run TS and CSS in watch mode during dev process @done(25-10-04 20:08)
+    ✔ Write how to package the application -> `npm run package` @done(25-10-04 20:08)
+    ✔ Write how to configure the logo @done(25-10-04 20:08)
+    ✔ Write about how to create a new application @done(25-10-04 20:08)
+        ✔ Relay the name of the application and the identifier @done(25-10-04 20:08)
+    ✔ Copy this README file into the generated apps as well @done(25-10-05 00:02)
+        ✔ This will standardise documentation @done(25-10-05 00:02)
+
+✔ Setup UI routing @done(25-11-10 20:37)
+    ✔ Setup dependencies @done(25-11-10 20:31)
+    ✔ Create router.ts @done(25-11-10 20:37)
+    ✔ Import this into app.ts @done(25-11-10 20:37)
+
+✔ Setup concurrent builds for CSS and TS @done(25-11-10 20:09)
+    ✔ Setup dependencies @done(25-11-10 20:09)
+    ✔ Setup npm command @done(25-11-10 20:09)
+
+✔ Ask for template type @done(25-12-10 00:19)
+    ✔ Build @done(25-12-09 23:24)
+    ✔ Test @done(25-12-10 00:19)
+
+    ✔ Check in MANIFEST @done(25-12-10 00:19)
+
+☐ Update 
+    ✔ MANIFEST file resources @done(25-12-10 00:19)
+        ✔ files array (list of files to be copied) @done(25-12-10 00:19)
+            ✔ Build @done(25-12-09 23:24)
+            ✔ Test @done(25-12-10 00:19)
+        ✔ folders array (list of folders to be copied) @done(25-12-10 00:19)
+            ✔ Build @done(25-12-09 23:24)
+            ✔ Test @done(25-12-10 00:19)
+
+    ✔ app.ts @done(25-12-10 00:20)
+        ✔ store the name of the enclave @done(25-12-10 00:19)
+            ✔ Build @done(25-12-09 23:34)
+            ✔ Test @done(25-12-10 00:19)
+        ✔ export another routePrefix = `/enclave/${enclaveName}` @done(25-12-10 00:20)
+            ✔ Build @done(25-12-09 23:34)
+            ✔ Test @done(25-12-10 00:20)
+        ✔ default route should be `${routePrefix}/ui` @done(25-12-10 00:20)
+            ✔ Build @done(25-12-09 23:34)
+            ✔ Test @done(25-12-10 00:20)
+        ✔ add a 404 page route @done(25-12-10 00:20)
+            ✔ Build @done(25-12-09 23:35)
+            ✔ Test @done(25-12-10 00:20)
+
+    ✔ package.ts @done(25-12-10 00:32)
+        ✔ After copying resources/dist (fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });) @done(25-12-10 00:32)
+            ✔ Iterate over all the resources.files array within the MANIFEST and copy these files @done(25-12-10 00:32)
+            ✔ Iterate over all the resources.folders array within the MANIFEST and copy these folders recursively @done(25-12-10 00:32)
+
+    ✔ server.ts @done(25-12-10 00:32)
+
+    ☐ golang
+        ☐ server.go
+    ☐ python
+        ☐ server.py
+
+☐ Configure server file
+    ✔ Node @done(25-12-10 00:36)
+    ☐ Golang
+    ☐ Python
+
+
+☐ Write the README file
