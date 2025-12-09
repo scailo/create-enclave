@@ -1,5 +1,4 @@
 import Fastify from "fastify";
-import proxy from "@fastify/http-proxy";
 import fastifyStatic from "@fastify/static";
 import * as path from "path";
 import * as fs from "fs";
@@ -130,51 +129,6 @@ function replaceBundleCaches(page: string) {
 }
 
 // ------------------------------------------------------------------------------------------
-
-server.post("/csrf", async (request, reply) => {
-    try {
-        // Create a new request to /csrf endpoint
-        let res = await fetch(upstreamAPI + "/csrf", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Request-ID": crypto.randomUUID(),
-                "auth_token": authToken
-            },
-            body: JSON.stringify(request.body)
-        });
-        let data = await res.json();
-        reply.send(data);
-    } catch (e) {
-        reply.code(500).send(e);
-    }
-});
-
-// ------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------
-// Register the proxy here
-server.register(proxy, {
-    upstream: upstreamAPI,
-    // prefix: '/Scailo',
-    httpMethods: ["POST"],
-    preValidation: async (request, reply) => {
-        try {
-            request.headers['X-Request-ID'] = crypto.randomUUID();
-            request.headers['auth_token'] = authToken
-            request.headers['is_proxied'] = "true";
-        } catch (e) {
-            reply.code(500).send(e);
-        }
-    },
-    replyOptions: {
-        onResponse(request, reply, res) {
-            reply.header("X-Response-ID", crypto.randomUUID());
-            reply.send(res);
-        },
-    }
-})
-
 server.setNotFoundHandler((request, reply) => {
     reply.redirect("/");
 })

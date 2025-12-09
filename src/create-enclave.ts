@@ -121,18 +121,9 @@ async function setupDependenciesForNode() {
         "tailwindcss",
         "@tailwindcss/cli",
         "daisyui@latest",
-        "typescript",
-        "@types/node",
         "esbuild",
         "@inquirer/prompts@7.8.6",
-        "@connectrpc/connect-node@1.7.0",
         "concurrently@9.2.1",
-        "fastify@4.28.1",
-        "@fastify/http-proxy@9.5.0",
-        "@fastify/static@7.0.4",
-        "fastify-favicon@4.3.0",
-        "dotenv",
-
         "semver",
         "@types/semver",
         "yaml",
@@ -141,6 +132,19 @@ async function setupDependenciesForNode() {
     ];
 
     await spawnChildProcess("npm", ["install", ...npmDevDependencies, "--save-dev"]);
+
+    const npmDependencies = [
+        "typescript",
+        "@types/node",
+        "@connectrpc/connect-node@1.7.0",
+        "fastify@4.28.1",
+        "@fastify/static@7.0.4",
+        "fastify-favicon@4.3.0",
+        "dotenv",
+    ]
+
+    await spawnChildProcess("npm", ["install", ...npmDependencies, "--save"]);
+
     // Create the tsconfig.json
     await spawnChildProcess("npx", ["tsc", "--init"]);
 }
