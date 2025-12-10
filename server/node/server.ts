@@ -31,7 +31,7 @@ if (USERNAME == undefined || USERNAME == null || USERNAME == "") {
     process.exit(1);
 }
 
-if (PASSWORD == PASSWORD || PASSWORD == null || PASSWORD == "") {
+if (PASSWORD == undefined || PASSWORD == null || PASSWORD == "") {
     console.log("PASSWORD not set");
     process.exit(1);
 }
