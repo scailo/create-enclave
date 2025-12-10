@@ -484,6 +484,8 @@ function runPostSetupScripts(_a) {
                     if (!(enclaveType == "node")) return [3 /*break*/, 3];
                     return [3 /*break*/, 7];
                 case 3:
+                    if (!(enclaveType == "golang")) return [3 /*break*/, 5];
+                    return [4 /*yield*/, spawnChildProcess("go", ["mod", "tidy"])];
                 case 4:
                     _c.sent();
                     return [3 /*break*/, 7];

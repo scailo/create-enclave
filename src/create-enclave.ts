@@ -609,6 +609,7 @@ async function runPostSetupScripts({ enclaveType }: { enclaveType: enclaveTempla
     if (enclaveType == "node") {
 
     } else if (enclaveType == "golang") {
+        await spawnChildProcess("go", ["mod", "tidy"]);
     } else if (enclaveType == "python") {
         await spawnChildProcess("uv", ["sync", "--all-groups"]);
     }
