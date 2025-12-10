@@ -240,17 +240,17 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
     fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 2), { flag: "w", flush: true });
 }
 
-async function createIndexHTML({ appName, version }: { appName: string, version: string }) {
+async function createIndexHTML({ appName, version, enclaveName }: { appName: string, version: string, enclaveName: string }) {
     const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="./resources/dist/img/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/enclave/${enclaveName}/resources/dist/img/favicon.ico" type="image/x-icon">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <link rel="preload" as="script" href="./resources/dist/js/bundle.src.min.js">
-    <link rel="stylesheet" href="./resources/dist/css/bundle.css">
+    <link rel="preload" as="script" href="/enclave/${enclaveName}/resources/dist/js/bundle.src.min.js">
+    <link rel="stylesheet" href="/enclave/${enclaveName}/resources/dist/css/bundle.css">
     <title>${appName}</title>
 </head>
 <body class="text-gray-800">
@@ -259,7 +259,7 @@ async function createIndexHTML({ appName, version }: { appName: string, version:
     </div>
     <div id="container" class="container"></div>
     <!-- Attach the JS bundle here -->
-    <script src="./resources/dist/js/bundle.src.min.js"></script>
+    <script src="/enclave/${enclaveName}/resources/dist/js/bundle.src.min.js"></script>
 </body>
 </html>
 `;
@@ -633,7 +633,7 @@ async function main() {
 
     fs.writeFileSync(appCSSPath, [`@import "tailwindcss"`, daisyUiPlugin].map(a => `${a};`).join("\n"), { flag: "w", flush: true });
 
-    await createIndexHTML({ appName: applicationName, version });
+    await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier });
     await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier });
     await createRouterTS({ routerEntryTSPath });
     await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate });

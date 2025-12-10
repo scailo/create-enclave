@@ -68,12 +68,12 @@ async function loginToAPI() {
 }
 
 // ------------------------------------------------------------------------------------------
-// Register static routes here
-server.register(require('fastify-favicon'), { path: './resources/dist/img', name: 'favicon.ico', maxAge: 3600 })
+// Register static routes here (this will serve the correct favicon from any route)
+server.register(require('fastify-favicon'), { path: `./resources/dist/img`, name: 'favicon.ico', maxAge: 3600 })
 // Setup static handler for web/
 server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'resources', 'dist'),
-    prefix: '/resources/dist', // optional: default '/'
+    prefix: `/enclave/${ENCLAVE_NAME}/resources/dist`, // optional: default '/'
     decorateReply: false,
     constraints: {} // optional: default {}
 });
@@ -108,23 +108,23 @@ server.get(`/enclave/${ENCLAVE_NAME}/api/random`, async (request, reply) => {
     reply.send({ random: Math.random() });
 });
 
-server.get("/health/startup", async (request, reply) => {
+server.get(`/enclave/${ENCLAVE_NAME}/health/startup`, async (request, reply) => {
     reply.send({ status: "OK" });
 });
 
-server.get("/health/liveliness", async (request, reply) => {
+server.get(`/enclave/${ENCLAVE_NAME}/health/liveliness`, async (request, reply) => {
     reply.send({ status: "OK" });
 });
 
-server.get("/health/readiness", async (request, reply) => {
+server.get(`/enclave/${ENCLAVE_NAME}/health/readiness`, async (request, reply) => {
     reply.send({ status: "OK" });
 });
 
 function replaceBundleCaches(page: string) {
     const version = new Date().toISOString();
-    page = page.replace(`<link rel="preload" as="script" href="./resources/dist/js/bundle.src.min.js">`, `<link rel="preload" as="script" href="/resources/dist/js/bundle.src.min.js?v=${version}">`)
-    page = page.replace(`<script src="./resources/dist/js/bundle.src.min.js"></script>`, `<script src="/resources/dist/js/bundle.src.min.js?v=${version}"></script>`)
-    page = page.replace(`<link rel="stylesheet" href="./resources/dist/css/bundle.css">`, `<link rel="stylesheet" href="/resources/dist/css/bundle.css?v=${version}">`)
+    page = page.replace(`<link rel="preload" as="script" href="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js">`, `<link rel="preload" as="script" href="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js?v=${version}">`)
+    page = page.replace(`<script src="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js"></script>`, `<script src="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js?v=${version}"></script>`)
+    page = page.replace(`<link rel="stylesheet" href="/enclave/${ENCLAVE_NAME}/resources/dist/css/bundle.css">`, `<link rel="stylesheet" href="/enclave/${ENCLAVE_NAME}/resources/dist/css/bundle.css?v=${version}">`)
     return page
 }
 
