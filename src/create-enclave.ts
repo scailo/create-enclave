@@ -548,11 +548,12 @@ async function createTestServer({ enclaveType, enclaveName }: { enclaveType: enc
     }
 
     const envFile = `
-enclaveName=${enclaveName}
-upstreamAPI=http://127.0.0.1:21000
-port=9090
-username=
-password=`;
+ENCLAVE_NAME=${enclaveName}
+UPSTREAM_API=http://127.0.0.1:21000
+PORT=9090
+PRODUCTION=false
+USERNAME=
+PASSWORD=`;
 
     fs.writeFileSync(".env", envFile.trim(), { flag: "w", flush: true });
 }

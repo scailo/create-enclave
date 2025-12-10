@@ -5,34 +5,34 @@ import * as fs from "fs";
 import { createConnectTransport } from "@connectrpc/connect-node";
 import { getScailoClientForLoginService } from "@kernelminds/scailo-sdk";
 
-const enclaveName = (process.env.enclaveName || "").trim();
-const upstreamAPI = (process.env.upstreamAPI || "").trim();
-const port = parseInt(process.env.port || "0");
-const username = (process.env.username || "").trim();
-const password = (process.env.password || "").trim();
+const ENCLAVE_NAME = (process.env.ENCLAVE_NAME || "").trim();
+const UPSTREAM_API = (process.env.UPSTREAM_API || "").trim();
+const PORT = parseInt(process.env.PORT || "0");
+const USERNAME = (process.env.USERNAME || "").trim();
+const PASSWORD = (process.env.PASSWORD || "").trim();
 
-if (enclaveName == undefined || enclaveName == null || enclaveName == "") {
-    console.log("enclaveName not set");
+if (ENCLAVE_NAME == undefined || ENCLAVE_NAME == null || ENCLAVE_NAME == "") {
+    console.log("ENCLAVE_NAME not set");
     process.exit(1);
 }
 
-if (upstreamAPI == undefined || upstreamAPI == null || upstreamAPI == "") {
-    console.log("upstreamAPI not set");
+if (UPSTREAM_API == undefined || UPSTREAM_API == null || UPSTREAM_API == "") {
+    console.log("UPSTREAM_API not set");
     process.exit(1);
 }
 
-if (port == undefined || port == null || port == 0) {
-    console.log("port not set");
+if (PORT == undefined || PORT == null || PORT == 0) {
+    console.log("PORT not set");
     process.exit(1);
 }
 
-if (username == undefined || username == null || username == "") {
-    console.log("username not set");
+if (USERNAME == undefined || USERNAME == null || USERNAME == "") {
+    console.log("USERNAME not set");
     process.exit(1);
 }
 
-if (password == undefined || password == null || password == "") {
-    console.log("password not set");
+if (PASSWORD == PASSWORD || PASSWORD == null || PASSWORD == "") {
+    console.log("PASSWORD not set");
     process.exit(1);
 }
 
@@ -44,7 +44,7 @@ function getTransport(apiEndPoint: string) {
     });
 }
 
-const transport = getTransport(upstreamAPI);
+const transport = getTransport(UPSTREAM_API);
 const server = Fastify({ logger: true, trustProxy: true });
 const loginClient = getScailoClientForLoginService(transport);
 
@@ -54,7 +54,7 @@ let production = false;
 async function loginToAPI() {
     console.log("About to login to API")
     try {
-        loginClient.loginAsEmployeePrimary({ username: username, plainTextPassword: password }).then(response => {
+        loginClient.loginAsEmployeePrimary({ username: USERNAME, plainTextPassword: PASSWORD }).then(response => {
             authToken = response.authToken;
             console.log("Logged in with auth token: " + authToken);
         });
@@ -87,7 +87,7 @@ server.get("/*", async (request, reply) => {
     reply.send(replaceBundleCaches(indexPage));
 });
 
-server.get(`/enclave/${enclaveName}/ui`, async (request, reply) => {
+server.get(`/enclave/${ENCLAVE_NAME}/ui`, async (request, reply) => {
     if (!production) {
         indexPage = fs.readFileSync(path.join(process.cwd(), 'index.html'), { encoding: 'utf-8' });
     }
@@ -95,7 +95,7 @@ server.get(`/enclave/${enclaveName}/ui`, async (request, reply) => {
     reply.send(replaceBundleCaches(indexPage));
 });
 
-server.get(`/enclave/${enclaveName}/ui/*`, async (request, reply) => {
+server.get(`/enclave/${ENCLAVE_NAME}/ui/*`, async (request, reply) => {
     if (!production) {
         indexPage = fs.readFileSync(path.join(process.cwd(), 'index.html'), { encoding: 'utf-8' });
     }
@@ -103,7 +103,7 @@ server.get(`/enclave/${enclaveName}/ui/*`, async (request, reply) => {
     reply.send(replaceBundleCaches(indexPage));
 });
 
-server.get(`/enclave/${enclaveName}/api/random`, async (request, reply) => {
+server.get(`/enclave/${ENCLAVE_NAME}/api/random`, async (request, reply) => {
     reply.header("Content-Type", "application/json");
     reply.send({ random: Math.random() });
 });
@@ -135,6 +135,6 @@ server.setNotFoundHandler((request, reply) => {
 // ------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------
-console.log(`Listening on port ${port} with Production: ${production}`);
+console.log(`Listening on port ${PORT} with Production: ${production}`);
 loginToAPI();
-server.listen({ port: port, host: '0.0.0.0' });
+server.listen({ port: PORT, host: '0.0.0.0' });
