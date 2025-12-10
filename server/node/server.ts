@@ -51,6 +51,8 @@ const loginClient = getScailoClientForLoginService(transport);
 let authToken = "";
 let production = false;
 
+const enclavePrefix = `/enclave/${ENCLAVE_NAME}`;
+
 async function loginToAPI() {
     console.log("About to login to API")
     try {
@@ -73,7 +75,7 @@ server.register(require('fastify-favicon'), { path: `./resources/dist/img`, name
 // Setup static handler for web/
 server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'resources', 'dist'),
-    prefix: `/enclave/${ENCLAVE_NAME}/resources/dist`, // optional: default '/'
+    prefix: `${enclavePrefix}/resources/dist`, // optional: default '/'
     decorateReply: false,
     constraints: {} // optional: default {}
 });
@@ -87,7 +89,7 @@ server.get("/*", async (request, reply) => {
     reply.send(replaceBundleCaches(indexPage));
 });
 
-server.get(`/enclave/${ENCLAVE_NAME}/ui`, async (request, reply) => {
+server.get(`${enclavePrefix}/ui`, async (request, reply) => {
     if (!production) {
         indexPage = fs.readFileSync(path.join(process.cwd(), 'index.html'), { encoding: 'utf-8' });
     }
@@ -95,7 +97,7 @@ server.get(`/enclave/${ENCLAVE_NAME}/ui`, async (request, reply) => {
     reply.send(replaceBundleCaches(indexPage));
 });
 
-server.get(`/enclave/${ENCLAVE_NAME}/ui/*`, async (request, reply) => {
+server.get(`${enclavePrefix}/ui/*`, async (request, reply) => {
     if (!production) {
         indexPage = fs.readFileSync(path.join(process.cwd(), 'index.html'), { encoding: 'utf-8' });
     }
@@ -103,28 +105,28 @@ server.get(`/enclave/${ENCLAVE_NAME}/ui/*`, async (request, reply) => {
     reply.send(replaceBundleCaches(indexPage));
 });
 
-server.get(`/enclave/${ENCLAVE_NAME}/api/random`, async (request, reply) => {
+server.get(`${enclavePrefix}/api/random`, async (request, reply) => {
     reply.header("Content-Type", "application/json");
     reply.send({ random: Math.random() });
 });
 
-server.get(`/enclave/${ENCLAVE_NAME}/health/startup`, async (request, reply) => {
+server.get(`${enclavePrefix}/health/startup`, async (request, reply) => {
     reply.send({ status: "OK" });
 });
 
-server.get(`/enclave/${ENCLAVE_NAME}/health/liveliness`, async (request, reply) => {
+server.get(`${enclavePrefix}/health/liveliness`, async (request, reply) => {
     reply.send({ status: "OK" });
 });
 
-server.get(`/enclave/${ENCLAVE_NAME}/health/readiness`, async (request, reply) => {
+server.get(`${enclavePrefix}/health/readiness`, async (request, reply) => {
     reply.send({ status: "OK" });
 });
 
 function replaceBundleCaches(page: string) {
     const version = new Date().toISOString();
-    page = page.replace(`<link rel="preload" as="script" href="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js">`, `<link rel="preload" as="script" href="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js?v=${version}">`)
-    page = page.replace(`<script src="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js"></script>`, `<script src="/enclave/${ENCLAVE_NAME}/resources/dist/js/bundle.src.min.js?v=${version}"></script>`)
-    page = page.replace(`<link rel="stylesheet" href="/enclave/${ENCLAVE_NAME}/resources/dist/css/bundle.css">`, `<link rel="stylesheet" href="/enclave/${ENCLAVE_NAME}/resources/dist/css/bundle.css?v=${version}">`)
+    page = page.replace(`<link rel="preload" as="script" href="${enclavePrefix}/resources/dist/js/bundle.src.min.js">`, `<link rel="preload" as="script" href="${enclavePrefix}/resources/dist/js/bundle.src.min.js?v=${version}">`)
+    page = page.replace(`<script src="${enclavePrefix}/resources/dist/js/bundle.src.min.js"></script>`, `<script src="${enclavePrefix}/resources/dist/js/bundle.src.min.js?v=${version}"></script>`)
+    page = page.replace(`<link rel="stylesheet" href="${enclavePrefix}/resources/dist/css/bundle.css">`, `<link rel="stylesheet" href="${enclavePrefix}/resources/dist/css/bundle.css?v=${version}">`)
     return page
 }
 
