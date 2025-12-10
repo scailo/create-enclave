@@ -228,7 +228,8 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
         scripts.push(["dev:start", `go run server.go`]);
         scripts.push(["start", `go run server.go`]); // This is in production
     } else if (enclaveType == "python") {
-
+        scripts.push(["dev:start", `uv run server.py`]);
+        scripts.push(["start", `uv run server.py`]); // This is in production
     }
 
     for (let i = 0; i < scripts.length; i++) {
@@ -532,6 +533,7 @@ resources:
         - server.py
         - pyproject.toml
         - uv.lock
+        - .python-version
     `
     }
 
@@ -547,7 +549,10 @@ async function createTestServer({ enclaveType, enclaveName }: { enclaveType: enc
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.mod"), "go.mod");
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
     } else if (enclaveType == "python") {
-
+        fs.copyFileSync(path.join(rootFolder, "server", "python", "server.py"), "server.py");
+        fs.copyFileSync(path.join(rootFolder, "server", "python", "pyproject.toml"), "pyproject.toml");
+        fs.copyFileSync(path.join(rootFolder, "server", "python", "uv.lock"), "uv.lock");
+        fs.copyFileSync(path.join(rootFolder, "server", "python", ".python-version"), ".python-version");
     }
 
     const envFile = `
@@ -596,10 +601,17 @@ async function fixTSConfig() {
     fs.writeFileSync("tsconfig.json", JSON.stringify(parsedCommandLine, null, 4), { flag: "w", flush: true });
 }
 
-async function runPostSetupScripts() {
+async function runPostSetupScripts({ enclaveType }: { enclaveType: enclaveTemplateType }) {
     // Run the first CSS build
     await spawnChildProcess("npm", ["run", "css:build"]);
     await spawnChildProcess("npm", ["run", "ui:build"]);
+
+    if (enclaveType == "node") {
+
+    } else if (enclaveType == "golang") {
+    } else if (enclaveType == "python") {
+        await spawnChildProcess("uv", ["sync", "--all-groups"]);
+    }
 }
 
 /**
@@ -644,7 +656,7 @@ async function main() {
 
     await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType: selectedEnclaveTemplate });
     await fixTSConfig();
-    await runPostSetupScripts();
+    await runPostSetupScripts({ enclaveType: selectedEnclaveTemplate });
     console.log("Your app is ready! What are you going to build next?");
 }
 

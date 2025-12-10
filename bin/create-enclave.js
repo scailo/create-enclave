@@ -345,6 +345,8 @@ function createBuildScripts(_a) {
                 scripts.push(["start", "go run server.go"]); // This is in production
             }
             else if (enclaveType == "python") {
+                scripts.push(["dev:start", "uv run server.py"]);
+                scripts.push(["start", "uv run server.py"]); // This is in production
             }
             for (i = 0; i < scripts.length; i++) {
                 script = scripts[i];
@@ -406,7 +408,7 @@ function createManifest(_a) {
                 manifest += "\n    files:\n        - server.go\n        - go.mod\n        - go.sum\n    ";
             }
             else if (enclaveType == "python") {
-                manifest += "\n    files:\n        - server.py\n        - pyproject.toml\n        - uv.lock\n    ";
+                manifest += "\n    files:\n        - server.py\n        - pyproject.toml\n        - uv.lock\n        - .python-version\n    ";
             }
             // Create MANIFEST.yaml
             fs.writeFileSync("MANIFEST.yaml", manifest.trim(), { flag: "w", flush: true });
@@ -428,6 +430,10 @@ function createTestServer(_a) {
                 fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
             }
             else if (enclaveType == "python") {
+                fs.copyFileSync(path.join(rootFolder, "server", "python", "server.py"), "server.py");
+                fs.copyFileSync(path.join(rootFolder, "server", "python", "pyproject.toml"), "pyproject.toml");
+                fs.copyFileSync(path.join(rootFolder, "server", "python", "uv.lock"), "uv.lock");
+                fs.copyFileSync(path.join(rootFolder, "server", "python", ".python-version"), ".python-version");
             }
             envFile = "\nENCLAVE_NAME=".concat(enclaveName, "\nUPSTREAM_API=http://127.0.0.1:21000\nPORT=9090\nPRODUCTION=false\nUSERNAME=\nPASSWORD=");
             fs.writeFileSync(".env", envFile.trim(), { flag: "w", flush: true });
@@ -461,20 +467,33 @@ function fixTSConfig() {
         });
     });
 }
-function runPostSetupScripts() {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+function runPostSetupScripts(_a) {
+    return __awaiter(this, arguments, void 0, function (_b) {
+        var enclaveType = _b.enclaveType;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0: 
                 // Run the first CSS build
                 return [4 /*yield*/, spawnChildProcess("npm", ["run", "css:build"])];
                 case 1:
                     // Run the first CSS build
-                    _a.sent();
+                    _c.sent();
                     return [4 /*yield*/, spawnChildProcess("npm", ["run", "ui:build"])];
                 case 2:
-                    _a.sent();
-                    return [2 /*return*/];
+                    _c.sent();
+                    if (!(enclaveType == "node")) return [3 /*break*/, 3];
+                    return [3 /*break*/, 7];
+                case 3:
+                case 4:
+                    _c.sent();
+                    return [3 /*break*/, 7];
+                case 5:
+                    if (!(enclaveType == "python")) return [3 /*break*/, 7];
+                    return [4 /*yield*/, spawnChildProcess("uv", ["sync", "--all-groups"])];
+                case 6:
+                    _c.sent();
+                    _c.label = 7;
+                case 7: return [2 /*return*/];
             }
         });
     });
@@ -537,7 +556,7 @@ function main() {
                     return [4 /*yield*/, fixTSConfig()];
                 case 12:
                     _b.sent();
-                    return [4 /*yield*/, runPostSetupScripts()];
+                    return [4 /*yield*/, runPostSetupScripts({ enclaveType: selectedEnclaveTemplate })];
                 case 13:
                     _b.sent();
                     console.log("Your app is ready! What are you going to build next?");
