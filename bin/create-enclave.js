@@ -154,9 +154,9 @@ function setupGitIgnore() {
         });
     });
 }
-function setupNPMDependenciesForUI() {
+function setupCommonNPMDependencies() {
     return __awaiter(this, void 0, void 0, function () {
-        var npmDependencies;
+        var npmDependencies, npmDevDependencies;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -168,6 +168,24 @@ function setupNPMDependenciesForUI() {
                     ];
                     return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDependencies, true), ["--save"], false))];
                 case 1:
+                    _a.sent();
+                    npmDevDependencies = [
+                        "tailwindcss",
+                        "@tailwindcss/cli",
+                        "daisyui@latest",
+                        "esbuild",
+                        "@inquirer/prompts@7.8.6",
+                        "concurrently@9.2.1",
+                        "semver",
+                        "@types/semver",
+                        "yaml",
+                        "adm-zip",
+                        "@types/adm-zip",
+                        "typescript",
+                        "@types/node",
+                    ];
+                    return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDevDependencies, true), ["--save-dev"], false))];
+                case 2:
                     _a.sent();
                     return [2 /*return*/];
             }
@@ -197,47 +215,34 @@ function setupDependencies(_a) {
                 case 5:
                     _c.sent();
                     _c.label = 6;
-                case 6: return [2 /*return*/];
+                case 6: 
+                // Create the tsconfig.json
+                return [4 /*yield*/, spawnChildProcess("npx", ["tsc", "--init"])];
+                case 7:
+                    // Create the tsconfig.json
+                    _c.sent();
+                    return [2 /*return*/];
             }
         });
     });
 }
 function setupDependenciesForNode() {
     return __awaiter(this, void 0, void 0, function () {
-        var npmDevDependencies;
+        var npmDependencies;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, setupNPMDependenciesForUI()];
+                case 0: return [4 /*yield*/, setupCommonNPMDependencies()];
                 case 1:
                     _a.sent();
-                    npmDevDependencies = [
-                        "tailwindcss",
-                        "@tailwindcss/cli",
-                        "daisyui@latest",
-                        "typescript",
-                        "@types/node",
-                        "esbuild",
-                        "@inquirer/prompts@7.8.6",
+                    npmDependencies = [
                         "@connectrpc/connect-node@1.7.0",
-                        "concurrently@9.2.1",
                         "fastify@4.28.1",
-                        "@fastify/http-proxy@9.5.0",
                         "@fastify/static@7.0.4",
                         "fastify-favicon@4.3.0",
                         "dotenv",
-                        "semver",
-                        "@types/semver",
-                        "yaml",
-                        "adm-zip",
-                        "@types/adm-zip",
                     ];
-                    return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDevDependencies, true), ["--save-dev"], false))];
+                    return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDependencies, true), ["--save"], false))];
                 case 2:
-                    _a.sent();
-                    // Create the tsconfig.json
-                    return [4 /*yield*/, spawnChildProcess("npx", ["tsc", "--init"])];
-                case 3:
-                    // Create the tsconfig.json
                     _a.sent();
                     return [2 /*return*/];
             }
@@ -248,7 +253,7 @@ function setupDependenciesForGolang() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, setupNPMDependenciesForUI()];
+                case 0: return [4 /*yield*/, setupCommonNPMDependencies()];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];
@@ -260,7 +265,7 @@ function setupDependenciesForPython() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, setupNPMDependenciesForUI()];
+                case 0: return [4 /*yield*/, setupCommonNPMDependencies()];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];
@@ -332,10 +337,12 @@ function createBuildScripts(_a) {
                 ["package", "npx tsx scripts/package.ts"],
             ];
             if (enclaveType == "node") {
-                scripts.push(["dev:serve", "npx tsx -r dotenv/config server.ts"]);
+                scripts.push(["dev:start", "npx tsx -r dotenv/config server.ts"]);
                 scripts.push(["start", "npx tsx server.ts"]); // This is in production
             }
             else if (enclaveType == "golang") {
+                scripts.push(["dev:start", "go run server.go"]);
+                scripts.push(["start", "go run server.go"]); // This is in production
             }
             else if (enclaveType == "python") {
             }
@@ -353,9 +360,9 @@ function createBuildScripts(_a) {
 function createIndexHTML(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
         var html;
-        var appName = _b.appName, version = _b.version;
+        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName;
         return __generator(this, function (_c) {
-            html = "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link rel=\"shortcut icon\" href=\"./resources/dist/img/favicon.ico\" type=\"image/x-icon\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge,chrome=1\" />\n    <link rel=\"preload\" as=\"script\" href=\"./resources/dist/js/bundle.src.min.js\">\n    <link rel=\"stylesheet\" href=\"./resources/dist/css/bundle.css\">\n    <title>".concat(appName, "</title>\n</head>\n<body class=\"text-gray-800\">\n    <div class=\"container text-center\">\n        <h1 class=\"text-3xl font-bold\">").concat(appName, "</h1>\n    </div>\n    <div id=\"container\" class=\"container\"></div>\n    <!-- Attach the JS bundle here -->\n    <script src=\"./resources/dist/js/bundle.src.min.js\"></script>\n</body>\n</html>\n");
+            html = "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link rel=\"shortcut icon\" href=\"/enclave/".concat(enclaveName, "/resources/dist/img/favicon.ico\" type=\"image/x-icon\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge,chrome=1\" />\n    <link rel=\"preload\" as=\"script\" href=\"/enclave/").concat(enclaveName, "/resources/dist/js/bundle.src.min.js\">\n    <link rel=\"stylesheet\" href=\"/enclave/").concat(enclaveName, "/resources/dist/css/bundle.css\">\n    <title>").concat(appName, "</title>\n</head>\n<body class=\"text-gray-800\">\n    <div class=\"container text-center\">\n        <h1 class=\"text-3xl font-bold\">").concat(appName, "</h1>\n    </div>\n    <div id=\"container\" class=\"container\"></div>\n    <!-- Attach the JS bundle here -->\n    <script src=\"/enclave/").concat(enclaveName, "/resources/dist/js/bundle.src.min.js\"></script>\n</body>\n</html>\n");
             // Create index.html
             fs.writeFileSync("index.html", html.trim(), { flag: "w", flush: true });
             return [2 /*return*/];
@@ -416,10 +423,13 @@ function createTestServer(_a) {
                 fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
             }
             else if (enclaveType == "golang") {
+                fs.copyFileSync(path.join(rootFolder, "server", "golang", "server.go"), "server.go");
+                fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.mod"), "go.mod");
+                fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
             }
             else if (enclaveType == "python") {
             }
-            envFile = "\nenclaveName=".concat(enclaveName, "\nupstreamAPI=http://127.0.0.1:21000\nport=9090\nusername=\npassword=");
+            envFile = "\nENCLAVE_NAME=".concat(enclaveName, "\nUPSTREAM_API=http://127.0.0.1:21000\nPORT=9090\nPRODUCTION=false\nUSERNAME=\nPASSWORD=");
             fs.writeFileSync(".env", envFile.trim(), { flag: "w", flush: true });
             return [2 /*return*/];
         });
@@ -506,7 +516,7 @@ function main() {
                     _a = createResourcesFolders(), appCSSPath = _a.appCSSPath, distFolderName = _a.distFolderName, appEntryTSPath = _a.appEntryTSPath, routerEntryTSPath = _a.routerEntryTSPath;
                     // Create the input css
                     fs.writeFileSync(appCSSPath, ["@import \"tailwindcss\"", daisyUiPlugin].map(function (a) { return "".concat(a, ";"); }).join("\n"), { flag: "w", flush: true });
-                    return [4 /*yield*/, createIndexHTML({ appName: applicationName, version: version })];
+                    return [4 /*yield*/, createIndexHTML({ appName: applicationName, version: version, enclaveName: applicationIdentifier })];
                 case 6:
                     _b.sent();
                     return [4 /*yield*/, createEntryTS({ appEntryTSPath: appEntryTSPath, enclaveName: applicationIdentifier })];

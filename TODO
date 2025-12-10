@@ -114,15 +114,34 @@
 
     ✔ server.ts @done(25-12-10 00:32)
 
-    ☐ golang
-        ☐ server.go
+    ✔ golang @done(25-12-10 15:12)
+        ✔ server.go @done(25-12-10 15:12)
     ☐ python
         ☐ server.py
 
 ☐ Configure server file
     ✔ Node @done(25-12-10 00:36)
+    ✔ Golang @done(25-12-10 15:12)
+    ☐ Python
+
+☐ Might need to add the exec command to manifest @critical
+    ☐ This might be the command that is executed once everything is deployed
+    ☐ What about other steps such as prebuild, install, postbuild?
+
+
+☐ Initiate base tests (including code coverage) for
+    ☐ Node
+        ☐ Integrate mocha and fastify inject
     ☐ Golang
     ☐ Python
 
 
 ☐ Write the README file
+    ☐ Steps to create the app
+    ☐ Packaging steps for files and folders
+    ☐ Logic to create a nodejs app
+    ☐ Logic to create a golang app
+    ☐ Logic to create a python app
+    ☐ npm run dev:serve has been renamed to rpm run dev:start
+
+    ☐ Obviously, this could also be used to create just a background service

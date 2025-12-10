@@ -92,7 +92,7 @@ async function setupGitIgnore() {
     fs.writeFileSync(".gitignore", gitignoreList.join("\n").trim(), { flag: "w", flush: true });
 }
 
-async function setupNPMDependenciesForUI() {
+async function setupCommonNPMDependencies() {
     // Setup the node modules installation
     const npmDependencies = [
         "@kernelminds/scailo-sdk@latest",
@@ -102,20 +102,6 @@ async function setupNPMDependenciesForUI() {
     ];
 
     await spawnChildProcess("npm", ["install", ...npmDependencies, "--save"]);
-}
-
-async function setupDependencies({ enclaveType }: { enclaveType: enclaveTemplateType }) {
-    if (enclaveType == "node") {
-        await setupDependenciesForNode();
-    } else if (enclaveType == "golang") {
-        await setupDependenciesForGolang();
-    } else if (enclaveType == "python") {
-        await setupDependenciesForPython();
-    }
-}
-
-async function setupDependenciesForNode() {
-    await setupNPMDependenciesForUI();
 
     const npmDevDependencies = [
         "tailwindcss",
@@ -129,13 +115,30 @@ async function setupDependenciesForNode() {
         "yaml",
         "adm-zip",
         "@types/adm-zip",
+        "typescript",
+        "@types/node",
     ];
 
     await spawnChildProcess("npm", ["install", ...npmDevDependencies, "--save-dev"]);
+}
+
+async function setupDependencies({ enclaveType }: { enclaveType: enclaveTemplateType }) {
+    if (enclaveType == "node") {
+        await setupDependenciesForNode();
+    } else if (enclaveType == "golang") {
+        await setupDependenciesForGolang();
+    } else if (enclaveType == "python") {
+        await setupDependenciesForPython();
+    }
+
+    // Create the tsconfig.json
+    await spawnChildProcess("npx", ["tsc", "--init"]);
+}
+
+async function setupDependenciesForNode() {
+    await setupCommonNPMDependencies();
 
     const npmDependencies = [
-        "typescript",
-        "@types/node",
         "@connectrpc/connect-node@1.7.0",
         "fastify@4.28.1",
         "@fastify/static@7.0.4",
@@ -144,17 +147,14 @@ async function setupDependenciesForNode() {
     ]
 
     await spawnChildProcess("npm", ["install", ...npmDependencies, "--save"]);
-
-    // Create the tsconfig.json
-    await spawnChildProcess("npx", ["tsc", "--init"]);
 }
 
 async function setupDependenciesForGolang() {
-    await setupNPMDependenciesForUI();
+    await setupCommonNPMDependencies();
 }
 
 async function setupDependenciesForPython() {
-    await setupNPMDependenciesForUI();
+    await setupCommonNPMDependencies();
 }
 
 async function setupScripts() {
@@ -222,10 +222,11 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
     ]
 
     if (enclaveType == "node") {
-        scripts.push(["dev:serve", `npx tsx -r dotenv/config server.ts`]);
+        scripts.push(["dev:start", `npx tsx -r dotenv/config server.ts`]);
         scripts.push(["start", `npx tsx server.ts`]); // This is in production
     } else if (enclaveType == "golang") {
-
+        scripts.push(["dev:start", `go run server.go`]);
+        scripts.push(["start", `go run server.go`]); // This is in production
     } else if (enclaveType == "python") {
 
     }
@@ -542,7 +543,9 @@ async function createTestServer({ enclaveType, enclaveName }: { enclaveType: enc
     if (enclaveType == "node") {
         fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
     } else if (enclaveType == "golang") {
-
+        fs.copyFileSync(path.join(rootFolder, "server", "golang", "server.go"), "server.go");
+        fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.mod"), "go.mod");
+        fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
     } else if (enclaveType == "python") {
 
     }
