@@ -502,6 +502,14 @@ export interface context {
 }
 
 async function createManifest({ appName, version, enclaveName, appIdentifier, enclaveType }: { appName: string, version: string, enclaveName: string, appIdentifier: string, enclaveType: enclaveTemplateType }) {
+    let startExec = "";
+    if (enclaveType == "node") {
+        startExec = `npm start`;
+    } else if (enclaveType == "golang") {
+        startExec = `go run server.go`;
+    } else if (enclaveType == "python") {
+        startExec = `uv run server.py`;
+    }
     let manifest = `
 manifest_version: 1
 enclave_type: ${enclaveType}
@@ -509,8 +517,8 @@ app_version: ${version}
 app_name: ${appName}
 enclave_name: ${enclaveName}
 app_unique_identifier: "${appIdentifier}"
+start_exec: "${startExec}"
 resources:
-    html_entry: index.html
     logos:
         - resources/dist/img/logo.png
     folders: []`;
@@ -518,11 +526,13 @@ resources:
     if (enclaveType == "node") {
         manifest += `
     files:
+        - index.html
         - server.ts
     `
     } else if (enclaveType == "golang") {
         manifest += `
     files:
+        - index.html
         - server.go
         - go.mod
         - go.sum
@@ -530,6 +540,7 @@ resources:
     } else if (enclaveType == "python") {
         manifest += `
     files:
+        - index.html
         - server.py
         - pyproject.toml
         - uv.lock

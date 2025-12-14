@@ -122,7 +122,7 @@ function spawnChildProcess(command, args, options) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var manifest, userEnteredVersion, entryHTML, foldersToCopy, _i, foldersToCopy_1, folder, filesToCopy, _a, filesToCopy_1, file, zip, outputName;
+        var manifest, userEnteredVersion, foldersToCopy, _i, foldersToCopy_1, folder, filesToCopy, _a, filesToCopy_1, file, zip, outputName;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0: return [4 /*yield*/, loadManifest()];
@@ -141,8 +141,6 @@ function main() {
                     _b.sent();
                     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
                     fs.copyFileSync("MANIFEST.yaml", path.join("artifacts", "MANIFEST.yaml"));
-                    entryHTML = manifest["resources"]["html_entry"];
-                    fs.copyFileSync(entryHTML, path.join("artifacts", entryHTML));
                     fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });
                     fs.copyFileSync("package.json", path.join("artifacts", "package.json"));
                     fs.copyFileSync("package-lock.json", path.join("artifacts", "package-lock.json"));

@@ -397,18 +397,28 @@ function createRouterTS(_a) {
 }
 function createManifest(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
-        var manifest;
+        var startExec, manifest;
         var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, appIdentifier = _b.appIdentifier, enclaveType = _b.enclaveType;
         return __generator(this, function (_c) {
-            manifest = "\nmanifest_version: 1\nenclave_type: ".concat(enclaveType, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nresources:\n    html_entry: index.html\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
+            startExec = "";
             if (enclaveType == "node") {
-                manifest += "\n    files:\n        - server.ts\n    ";
+                startExec = "npm start";
             }
             else if (enclaveType == "golang") {
-                manifest += "\n    files:\n        - server.go\n        - go.mod\n        - go.sum\n    ";
+                startExec = "go run server.go";
             }
             else if (enclaveType == "python") {
-                manifest += "\n    files:\n        - server.py\n        - pyproject.toml\n        - uv.lock\n        - .python-version\n    ";
+                startExec = "uv run server.py";
+            }
+            manifest = "\nmanifest_version: 1\nenclave_type: ".concat(enclaveType, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
+            if (enclaveType == "node") {
+                manifest += "\n    files:\n        - index.html\n        - server.ts\n    ";
+            }
+            else if (enclaveType == "golang") {
+                manifest += "\n    files:\n        - index.html\n        - server.go\n        - go.mod\n        - go.sum\n    ";
+            }
+            else if (enclaveType == "python") {
+                manifest += "\n    files:\n        - index.html\n        - server.py\n        - pyproject.toml\n        - uv.lock\n        - .python-version\n    ";
             }
             // Create MANIFEST.yaml
             fs.writeFileSync("MANIFEST.yaml", manifest.trim(), { flag: "w", flush: true });

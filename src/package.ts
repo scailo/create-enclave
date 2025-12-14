@@ -77,9 +77,6 @@ async function main() {
     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
     fs.copyFileSync("MANIFEST.yaml", path.join("artifacts", "MANIFEST.yaml"));
 
-    const entryHTML = manifest["resources"]["html_entry"];
-    fs.copyFileSync(entryHTML, path.join("artifacts", entryHTML));
-
     fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });
 
     fs.copyFileSync("package.json", path.join("artifacts", "package.json"));
