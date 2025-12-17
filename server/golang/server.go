@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/scailo/go-sdk"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
@@ -26,7 +27,7 @@ import (
 // Config holds all necessary environment variables
 type Config struct {
 	EnclaveName string
-	UpstreamAPI string
+	ScailoAPI   string
 	Port        int
 	Username    string
 	Password    string
@@ -72,7 +73,7 @@ func loadConfig() {
 
 	// 1. Read environment variables
 	GlobalConfig.EnclaveName = os.Getenv("ENCLAVE_NAME")
-	GlobalConfig.UpstreamAPI = os.Getenv("UPSTREAM_API")
+	GlobalConfig.ScailoAPI = os.Getenv("SCAILO_API")
 	GlobalConfig.Username = os.Getenv("USERNAME")
 	GlobalConfig.Password = os.Getenv("PASSWORD")
 
@@ -90,8 +91,8 @@ func loadConfig() {
 		log.Println("ENCLAVE_NAME not set")
 		exitCode = 1
 	}
-	if GlobalConfig.UpstreamAPI == "" {
-		log.Println("UPSTREAM_API not set")
+	if GlobalConfig.ScailoAPI == "" {
+		log.Println("SCAILO_API not set")
 		exitCode = 1
 	}
 	if GlobalConfig.Port == 0 {
@@ -133,20 +134,29 @@ func loginToAPI() {
 }
 
 func getServerURL() string {
-	if strings.HasPrefix(GlobalConfig.UpstreamAPI, "http") || strings.Contains(GlobalConfig.UpstreamAPI, "//") {
-		var split = strings.Split(GlobalConfig.UpstreamAPI, "//")
+	if strings.HasPrefix(GlobalConfig.ScailoAPI, "http") || strings.Contains(GlobalConfig.ScailoAPI, "//") {
+		var split = strings.Split(GlobalConfig.ScailoAPI, "//")
 		if len(split) > 1 {
 			return split[1]
 		}
 	}
 
-	return GlobalConfig.UpstreamAPI
+	return GlobalConfig.ScailoAPI
 }
 
 func performLogin() {
 	log.Println("About to login to API")
 
-	conn, err := grpc.NewClient(getServerURL(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	var creds grpc.DialOption
+	if strings.HasPrefix(GlobalConfig.ScailoAPI, "http://") {
+		// Without TLS
+		creds = grpc.WithTransportCredentials(insecure.NewCredentials())
+	} else {
+		// With TLS
+		creds = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, getServerURL()))
+	}
+
+	conn, err := grpc.NewClient(getServerURL(), creds)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

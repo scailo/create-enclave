@@ -568,7 +568,7 @@ async function createTestServer({ enclaveType, enclaveName }: { enclaveType: enc
 
     const envFile = `
 ENCLAVE_NAME=${enclaveName}
-UPSTREAM_API=http://127.0.0.1:21000
+SCAILO_API=http://127.0.0.1:21000
 PORT=9090
 PRODUCTION=false
 USERNAME=

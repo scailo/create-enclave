@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 class Config:
     """Holds all necessary environment variables, matching the Go structure."""
     ENCLAVE_NAME: str = ""
-    UPSTREAM_API: str = ""
+    SCAILO_API: str = ""
     PORT: int = 8080 # Default port
     USERNAME: str = ""
     PASSWORD: str = ""
@@ -56,7 +56,7 @@ def load_config():
 
     # 2. Read environment variables
     global_config.ENCLAVE_NAME = os.getenv("ENCLAVE_NAME")
-    global_config.UPSTREAM_API = os.getenv("UPSTREAM_API")
+    global_config.SCAILO_API = os.getenv("SCAILO_API")
     global_config.USERNAME = os.getenv("USERNAME")
     global_config.PASSWORD = os.getenv("PASSWORD")
 
@@ -72,8 +72,8 @@ def load_config():
     if not global_config.ENCLAVE_NAME:
         log.error("ENCLAVE_NAME not set")
         exit_code = 1
-    if not global_config.UPSTREAM_API:
-        log.error("UPSTREAM_API not set")
+    if not global_config.SCAILO_API:
+        log.error("SCAILO_API not set")
         exit_code = 1
     if global_config.PORT == 0:
         log.error("PORT not set or is 0")
@@ -95,11 +95,11 @@ def load_config():
 async def perform_login():
     global AUTH_TOKEN
     
-    log.info(f"Attempting login to API at: {global_config.UPSTREAM_API} with user: {global_config.USERNAME}")
+    log.info(f"Attempting login to API at: {global_config.SCAILO_API} with user: {global_config.USERNAME}")
 
     async with aiohttp.ClientSession() as http_client:
         # Create the login client
-        login_client = AsyncLoginServiceClient(global_config.UPSTREAM_API, http_client)
+        login_client = AsyncLoginServiceClient(global_config.SCAILO_API, http_client)
         # Call the login method to retrieve the auth token
         login_resp = await login_client.login_as_employee_primary(login.UserLoginRequest(username=global_config.USERNAME, plain_text_password=global_config.PASSWORD))
         if login_resp.auth_token:

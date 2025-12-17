@@ -6,7 +6,7 @@ import { createConnectTransport } from "@connectrpc/connect-node";
 import { getScailoClientForLoginService } from "@kernelminds/scailo-sdk";
 
 const ENCLAVE_NAME = (process.env.ENCLAVE_NAME || "").trim();
-const UPSTREAM_API = (process.env.UPSTREAM_API || "").trim();
+const SCAILO_API = (process.env.SCAILO_API || "").trim();
 const PORT = parseInt(process.env.PORT || "0");
 const USERNAME = (process.env.USERNAME || "").trim();
 const PASSWORD = (process.env.PASSWORD || "").trim();
@@ -16,8 +16,8 @@ if (ENCLAVE_NAME == undefined || ENCLAVE_NAME == null || ENCLAVE_NAME == "") {
     process.exit(1);
 }
 
-if (UPSTREAM_API == undefined || UPSTREAM_API == null || UPSTREAM_API == "") {
-    console.log("UPSTREAM_API not set");
+if (SCAILO_API == undefined || SCAILO_API == null || SCAILO_API == "") {
+    console.log("SCAILO_API not set");
     process.exit(1);
 }
 
@@ -44,7 +44,7 @@ function getTransport(apiEndPoint: string) {
     });
 }
 
-const transport = getTransport(UPSTREAM_API);
+const transport = getTransport(SCAILO_API);
 const server = Fastify({ logger: true, trustProxy: true });
 const loginClient = getScailoClientForLoginService(transport);
 
