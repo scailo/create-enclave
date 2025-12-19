@@ -32,11 +32,14 @@
     "adm-zip": "^0.5.16",
     "fastify": "^5.6.1",
     "semver": "^7.7.2",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "redis": "4.7.0",
+    "@fastify/cookie": "9.4.0",
+    "pino-pretty": "^13.1.2"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.6",
-    "@kernelminds/scailo-sdk": "^0.1.0",
+    "@kernelminds/scailo-sdk": "^0.1.7",
     "typescript": "^5.9.3"
   }
 }

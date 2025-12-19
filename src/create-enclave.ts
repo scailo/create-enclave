@@ -5,6 +5,7 @@ import path = require("path");
 import child_process = require("child_process");
 import ts = require('typescript');
 import prompt = require('@inquirer/prompts');
+import crypto = require("crypto");
 
 let applicationIdentifier = "scailo-test-widget";
 let applicationName = "Scailo Test Widget";
@@ -144,6 +145,9 @@ async function setupDependenciesForNode() {
         "@fastify/static@7.0.4",
         "fastify-favicon@4.3.0",
         "dotenv",
+        "redis@4.7.0",
+        "@fastify/cookie@9.4.0",
+        "pino-pretty@13.1.2"
     ]
 
     await spawnChildProcess("npm", ["install", ...npmDependencies, "--save"]);
@@ -572,7 +576,15 @@ SCAILO_API=http://127.0.0.1:21000
 PORT=9090
 PRODUCTION=false
 USERNAME=
-PASSWORD=`;
+PASSWORD=
+
+# Redis
+REDIS_USERNAME=
+REDIS_PASSWORD=
+REDIS_URL=localhost:6379
+
+WORKFLOW_EVENTS_CHANNEL=GENESIS-WORKFLOW-EVENTS
+COOKIE_SIGNATURE_SECRET=${crypto.randomBytes(32).toString('hex')}`;
 
     fs.writeFileSync(".env", envFile.trim(), { flag: "w", flush: true });
 }
@@ -669,7 +681,7 @@ async function main() {
     await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType: selectedEnclaveTemplate });
     await fixTSConfig();
     await runPostSetupScripts({ enclaveType: selectedEnclaveTemplate });
-    console.log("Your app is ready! What are you going to build next?");
+    console.log("Your app is ready! What are you going to build?");
 }
 
 main();

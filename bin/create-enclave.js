@@ -62,6 +62,7 @@ var path = require("path");
 var child_process = require("child_process");
 var ts = require("typescript");
 var prompt = require("@inquirer/prompts");
+var crypto = require("crypto");
 var applicationIdentifier = "scailo-test-widget";
 var applicationName = "Scailo Test Widget";
 var version = "0.0.1";
@@ -240,6 +241,9 @@ function setupDependenciesForNode() {
                         "@fastify/static@7.0.4",
                         "fastify-favicon@4.3.0",
                         "dotenv",
+                        "redis@4.7.0",
+                        "@fastify/cookie@9.4.0",
+                        "pino-pretty@13.1.2"
                     ];
                     return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDependencies, true), ["--save"], false))];
                 case 2:
@@ -445,7 +449,7 @@ function createTestServer(_a) {
                 fs.copyFileSync(path.join(rootFolder, "server", "python", "uv.lock"), "uv.lock");
                 fs.copyFileSync(path.join(rootFolder, "server", "python", ".python-version"), ".python-version");
             }
-            envFile = "\nENCLAVE_NAME=".concat(enclaveName, "\nSCAILO_API=http://127.0.0.1:21000\nPORT=9090\nPRODUCTION=false\nUSERNAME=\nPASSWORD=");
+            envFile = "\nENCLAVE_NAME=".concat(enclaveName, "\nSCAILO_API=http://127.0.0.1:21000\nPORT=9090\nPRODUCTION=false\nUSERNAME=\nPASSWORD=\n\n# Redis\nREDIS_USERNAME=\nREDIS_PASSWORD=\nREDIS_URL=localhost:6379\n\nWORKFLOW_EVENTS_CHANNEL=GENESIS-WORKFLOW-EVENTS\nCOOKIE_SIGNATURE_SECRET=").concat(crypto.randomBytes(32).toString('hex'));
             fs.writeFileSync(".env", envFile.trim(), { flag: "w", flush: true });
             return [2 /*return*/];
         });
@@ -571,7 +575,7 @@ function main() {
                     return [4 /*yield*/, runPostSetupScripts({ enclaveType: selectedEnclaveTemplate })];
                 case 13:
                     _b.sent();
-                    console.log("Your app is ready! What are you going to build next?");
+                    console.log("Your app is ready! What are you going to build?");
                     return [2 /*return*/];
             }
         });
