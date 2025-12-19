@@ -445,7 +445,7 @@ function createTestServer(_a) {
                 fs.copyFileSync(path.join(rootFolder, "server", "python", "uv.lock"), "uv.lock");
                 fs.copyFileSync(path.join(rootFolder, "server", "python", ".python-version"), ".python-version");
             }
-            envFile = "\nENCLAVE_NAME=".concat(enclaveName, "\nUPSTREAM_API=http://127.0.0.1:21000\nPORT=9090\nPRODUCTION=false\nUSERNAME=\nPASSWORD=");
+            envFile = "\nENCLAVE_NAME=".concat(enclaveName, "\nSCAILO_API=http://127.0.0.1:21000\nPORT=9090\nPRODUCTION=false\nUSERNAME=\nPASSWORD=");
             fs.writeFileSync(".env", envFile.trim(), { flag: "w", flush: true });
             return [2 /*return*/];
         });
