@@ -7,5 +7,5 @@ requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.13.2",
     "dotenv>=0.9.9",
-    "scailo-sdk>=0.2.7",
+    "scailo-sdk>=0.2.8",
 ]

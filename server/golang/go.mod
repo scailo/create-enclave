@@ -5,7 +5,7 @@ go 1.24.4
 require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/joho/godotenv v1.5.1
-	github.com/scailo/go-sdk v0.1.3
+	github.com/scailo/go-sdk v0.1.4
 	google.golang.org/grpc v1.77.0
 )
 
