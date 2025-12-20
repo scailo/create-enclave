@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 
 # Import login module
 from scailo_sdk.login_api import AsyncLoginServiceClient, login
-from scailo_sdk.base import scailo_pb2 as base
 
 # --- Configuration and Globals ---
 
@@ -29,10 +28,10 @@ class Config:
 
 # Global state variables
 global_config = Config()
-PRODUCTION: bool = False
-INDEX_PAGE_CACHE: str = ""
-ENCLAVE_PREFIX: str = ""
-AUTH_TOKEN: str = ""
+production: bool = False
+index_page_cache: str = ""
+enclave_prefix: str = ""
+auth_token: str = ""
 
 # Constants
 LOGIN_INTERVAL_SECONDS = 3600 # 1 hour
@@ -44,21 +43,21 @@ def load_config():
     """Reads and validates environment variables."""
     load_dotenv(override=True)
 
-    global PRODUCTION
+    global production
     # Determine production status
     production_flag = os.getenv("PRODUCTION", "false").lower() == "true"
     
     # Matching Go's logic: if GIN_MODE is 'release' OR PRODUCTION is 'true'
     if production_flag:
-        PRODUCTION = True
+        production = True
     
-    log.info(f"Server operating in Production mode: {PRODUCTION}")
+    log.info(f"Server operating in Production mode: {production}")
 
     # 2. Read environment variables
-    global_config.ENCLAVE_NAME = os.getenv("ENCLAVE_NAME")
-    global_config.SCAILO_API = os.getenv("SCAILO_API")
-    global_config.USERNAME = os.getenv("USERNAME")
-    global_config.PASSWORD = os.getenv("PASSWORD")
+    global_config.ENCLAVE_NAME = os.getenv("ENCLAVE_NAME") or ""
+    global_config.SCAILO_API = os.getenv("SCAILO_API") or ""
+    global_config.USERNAME = os.getenv("USERNAME") or ""
+    global_config.PASSWORD = os.getenv("PASSWORD") or ""
 
     port_str = os.getenv("PORT", "8080")
     try:
@@ -85,15 +84,15 @@ def load_config():
         log.error("PASSWORD not set (required for API login stub)")
         exit_code = 1
 
-    global ENCLAVE_PREFIX
-    ENCLAVE_PREFIX = f"/enclave/{global_config.ENCLAVE_NAME}"
+    global enclave_prefix
+    enclave_prefix = f"/enclave/{global_config.ENCLAVE_NAME}"
     
     if exit_code != 0:
         log.error("Configuration errors found. Exiting.")
         sys.exit(exit_code)
 
 async def perform_login():
-    global AUTH_TOKEN
+    global auth_token
     
     log.info(f"Attempting login to API at: {global_config.SCAILO_API} with user: {global_config.USERNAME}")
 
@@ -103,7 +102,7 @@ async def perform_login():
         # Call the login method to retrieve the auth token
         login_resp = await login_client.login_as_employee_primary(login.UserLoginRequest(username=global_config.USERNAME, plain_text_password=global_config.PASSWORD))
         if login_resp.auth_token:
-            AUTH_TOKEN = login_resp.auth_token
+            auth_token = login_resp.auth_token
             log.info(f"Successfully logged in...")
     
     
@@ -139,14 +138,14 @@ def replace_bundle_caches(page: str) -> str:
     log.debug(f"Applying cache-busting version: {version}")
 
     # Asset paths to replace
-    script_preload_old = f'<link rel="preload" as="script" href="{ENCLAVE_PREFIX}/resources/dist/js/bundle.src.min.js">'
-    script_preload_new = f'<link rel="preload" as="script" href="{ENCLAVE_PREFIX}/resources/dist/js/bundle.src.min.js?v={version}">'
+    script_preload_old = f'<link rel="preload" as="script" href="{enclave_prefix}/resources/dist/js/bundle.src.min.js">'
+    script_preload_new = f'<link rel="preload" as="script" href="{enclave_prefix}/resources/dist/js/bundle.src.min.js?v={version}">'
     
-    script_src_old = f'<script src="{ENCLAVE_PREFIX}/resources/dist/js/bundle.src.min.js"></script>'
-    script_src_new = f'<script src="{ENCLAVE_PREFIX}/resources/dist/js/bundle.src.min.js?v={version}"></script>'
+    script_src_old = f'<script src="{enclave_prefix}/resources/dist/js/bundle.src.min.js"></script>'
+    script_src_new = f'<script src="{enclave_prefix}/resources/dist/js/bundle.src.min.js?v={version}"></script>'
     
-    style_link_old = f'<link rel="stylesheet" href="{ENCLAVE_PREFIX}/resources/dist/css/bundle.css">'
-    style_link_new = f'<link rel="stylesheet" href="{ENCLAVE_PREFIX}/resources/dist/css/bundle.css?v={version}">'
+    style_link_old = f'<link rel="stylesheet" href="{enclave_prefix}/resources/dist/css/bundle.css">'
+    style_link_new = f'<link rel="stylesheet" href="{enclave_prefix}/resources/dist/css/bundle.css?v={version}">'
 
     # Replacement execution
     page = page.replace(script_preload_old, script_preload_new)
@@ -158,18 +157,18 @@ def replace_bundle_caches(page: str) -> str:
 
 async def get_index_page() -> str:
     """Reads index.html, using the cache if in production."""
-    global INDEX_PAGE_CACHE
+    global index_page_cache
     
-    if PRODUCTION and INDEX_PAGE_CACHE:
-        return INDEX_PAGE_CACHE
+    if production and index_page_cache:
+        return index_page_cache
     
     try:
         # For simplicity, we use a direct read as it is only done once in production.
         with open(INDEX_HTML_FILE, 'r') as f:
             content = f.read()
             
-        if PRODUCTION:
-            INDEX_PAGE_CACHE = content
+        if production:
+            index_page_cache = content
             
         return content
             
@@ -182,7 +181,7 @@ async def get_index_page() -> str:
 
 # --- Request Handlers ---
 
-async def index_handler(request):
+async def index_handler(request: web.Request):
     """
     The single handler for all root/SPA UI routes (e.g., /enclave/name/ui, /enclave/name/ui/path).
     Serves the cache-busted index.html.
@@ -198,31 +197,31 @@ async def index_handler(request):
     return web.Response(text=page_with_cache, status=200, content_type='text/html')
 
 
-async def health_check_handler(request):
+async def health_check_handler(request: web.Request):
     return web.json_response({"status": "OK"}, status=200)
 
 
-async def random_api_handler(request):
+async def random_api_handler(request: web.Request):
     """Handles the /api/random endpoint."""
     # Generate a random float between 0.0 and 1.0 (like Math.random())
     random_number = random.random()
     return web.json_response({"random": random_number}, status=200)
 
-async def no_route_handler(request):
+async def no_route_handler(request: web.Request):
     """Handles all unmatched routes and redirects them to the UI path."""
-    ui_path = f"{ENCLAVE_PREFIX}/ui"
+    ui_path = f"{enclave_prefix}/ui"
     log.info(f"No route found for {request.path}. Redirecting to {ui_path}")
     raise web.HTTPTemporaryRedirect(location=ui_path)
 
 # --- Background Task Management ---
 
-async def start_background_tasks(app):
+async def start_background_tasks(app: web.Application):
     """Starts the recurring login task and stores the reference."""
     # Create the task and immediately schedule it, storing the task object
     task = asyncio.create_task(login_to_api_task(app))
     app['login_task'] = task
 
-async def cleanup_background_tasks(app):
+async def cleanup_background_tasks(app: web.Application):
     """Cancels the recurring login task on application shutdown."""
     task = app.get('login_task')
     if task:
@@ -244,21 +243,21 @@ def create_app() -> web.Application:
     app = web.Application()
 
     # --- 1. Register Static Routes ---
-    static_route_path = f"{ENCLAVE_PREFIX}/resources/dist"
+    static_route_path = f"{enclave_prefix}/resources/dist"
     app.router.add_static(static_route_path, "resources/dist", name="static_resources")
     # log.info(f"Static route registered: {static_route_path} -> resources/dist")
 
     # --- 2. Health Checks ---
-    app.router.add_get(f"{ENCLAVE_PREFIX}/health/startup", health_check_handler)
-    app.router.add_get(f"{ENCLAVE_PREFIX}/health/liveliness", health_check_handler)
-    app.router.add_get(f"{ENCLAVE_PREFIX}/health/readiness", health_check_handler)
+    app.router.add_get(f"{enclave_prefix}/health/startup", health_check_handler)
+    app.router.add_get(f"{enclave_prefix}/health/liveliness", health_check_handler)
+    app.router.add_get(f"{enclave_prefix}/health/readiness", health_check_handler)
     
     # --- 3. API Endpoint ---
-    app.router.add_get(f"{ENCLAVE_PREFIX}/api/random", random_api_handler)
+    app.router.add_get(f"{enclave_prefix}/api/random", random_api_handler)
     
     # --- 4. Index Page / SPA Routes ---
-    ui_path_root = f"{ENCLAVE_PREFIX}/ui"
-    ui_path_spa = f"{ENCLAVE_PREFIX}/ui/{{tail:.*}}"
+    ui_path_root = f"{enclave_prefix}/ui"
+    ui_path_spa = f"{enclave_prefix}/ui/{{tail:.*}}"
     
     app.router.add_get(ui_path_root, index_handler)
     app.router.add_get(ui_path_spa, index_handler)
@@ -280,10 +279,10 @@ if __name__ == '__main__':
     # Start the application
     app = create_app()
     address = f"0.0.0.0:{global_config.PORT}"
-    log.info(f"Server listening on address {address} with Production: {PRODUCTION}")
+    log.info(f"Server listening on address {address} with Production: {production}")
     
     try:
-        web.run_app(app, host='0.0.0.0', port=global_config.PORT, print=False)
+        web.run_app(app, host='0.0.0.0', port=global_config.PORT)
     except Exception as e:
         log.critical(f"Server failed to start: {e}")
         sys.exit(1)
