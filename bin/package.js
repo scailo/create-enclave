@@ -55,6 +55,7 @@ var YAML = require("yaml");
 var fs = require("fs");
 var semver = require("semver");
 var AdmZip = require("adm-zip");
+var favicons = require("favicons");
 function loadManifest() {
     return __awaiter(this, void 0, void 0, function () {
         var file;
@@ -120,6 +121,48 @@ function spawnChildProcess(command, args, options) {
         });
     });
 }
+function generateSimpleFavicon(_a) {
+    return __awaiter(this, arguments, void 0, function (_b) {
+        var response, favicon, error_1;
+        var sourceFile = _b.sourceFile, outputDir = _b.outputDir, fileName = _b.fileName;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    _c.trys.push([0, 5, , 6]);
+                    // 1. Configure to only generate the standard favicon
+                    console.log('Generating favicon.ico...');
+                    return [4 /*yield*/, favicons.favicons(sourceFile, {
+                            icons: {
+                                android: false,
+                                appleIcon: false,
+                                appleStartup: false,
+                                favicons: true, // This enables the .ico file
+                                windows: false,
+                                yandex: false
+                            }
+                        })];
+                case 1:
+                    response = _c.sent();
+                    favicon = response.images.find(function (img) { return img.name === "favicon.ico"; });
+                    if (!favicon) return [3 /*break*/, 3];
+                    return [4 /*yield*/, fs.writeFileSync(path.join(outputDir, fileName), favicon.contents)];
+                case 2:
+                    _c.sent();
+                    console.log("Success! Created: ".concat(path.join(outputDir, fileName)));
+                    return [3 /*break*/, 4];
+                case 3:
+                    console.error('Could not find favicon.ico in the generated output.');
+                    _c.label = 4;
+                case 4: return [3 /*break*/, 6];
+                case 5:
+                    error_1 = _c.sent();
+                    console.error('Generation failed:', error_1);
+                    return [3 /*break*/, 6];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
 function main() {
     return __awaiter(this, void 0, void 0, function () {
         var manifest, userEnteredVersion, foldersToCopy, _i, foldersToCopy_1, folder, filesToCopy, _a, filesToCopy_1, file, zip, outputName;
@@ -128,23 +171,28 @@ function main() {
                 case 0: return [4 /*yield*/, loadManifest()];
                 case 1:
                     manifest = _b.sent();
-                    return [4 /*yield*/, acceptUserInputs({ existingVersion: manifest["app_version"] })];
+                    return [4 /*yield*/, acceptUserInputs({ existingVersion: manifest.app_version })];
                 case 2:
                     userEnteredVersion = _b.sent();
-                    manifest["app_version"] = userEnteredVersion;
+                    manifest.app_version = userEnteredVersion;
                     fs.writeFileSync('MANIFEST.yaml', YAML.stringify(manifest, { indent: 4 }));
-                    return [4 /*yield*/, spawnChildProcess("npm", ["run", "css:build"])];
+                    // Create the favicon here
+                    return [4 /*yield*/, generateSimpleFavicon({ sourceFile: path.join("resources", "dist", "logo.png"), outputDir: path.join("resources", "dist"), fileName: "favicon.ico" })];
                 case 3:
+                    // Create the favicon here
+                    _b.sent();
+                    return [4 /*yield*/, spawnChildProcess("npm", ["run", "css:build"])];
+                case 4:
                     _b.sent();
                     return [4 /*yield*/, spawnChildProcess("npm", ["run", "ui:build"])];
-                case 4:
+                case 5:
                     _b.sent();
                     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
                     fs.copyFileSync("MANIFEST.yaml", path.join("artifacts", "MANIFEST.yaml"));
                     fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });
                     fs.copyFileSync("package.json", path.join("artifacts", "package.json"));
                     fs.copyFileSync("package-lock.json", path.join("artifacts", "package-lock.json"));
-                    foldersToCopy = manifest["resources"]["folders"];
+                    foldersToCopy = manifest.resources.folders;
                     if (foldersToCopy && foldersToCopy.length > 0) {
                         for (_i = 0, foldersToCopy_1 = foldersToCopy; _i < foldersToCopy_1.length; _i++) {
                             folder = foldersToCopy_1[_i];
@@ -152,7 +200,7 @@ function main() {
                             fs.cpSync(path.join(folder), path.join("artifacts", folder), { recursive: true });
                         }
                     }
-                    filesToCopy = manifest["resources"]["files"];
+                    filesToCopy = manifest.resources.files;
                     if (filesToCopy && filesToCopy.length > 0) {
                         for (_a = 0, filesToCopy_1 = filesToCopy; _a < filesToCopy_1.length; _a++) {
                             file = filesToCopy_1[_a];
@@ -163,7 +211,7 @@ function main() {
                     zip = new AdmZip();
                     zip.addLocalFolder(process.cwd());
                     process.chdir("..");
-                    outputName = "".concat(manifest["app_name"], ".enc");
+                    outputName = "".concat(manifest.app_name, ".enc");
                     zip.writeZip(outputName);
                     fs.rmSync(path.join("artifacts"), { recursive: true });
                     console.log("Successfully package: ".concat(outputName, " (").concat(userEnteredVersion, ")"));

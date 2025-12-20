@@ -7,6 +7,7 @@ import YAML = require('yaml');
 import fs = require("fs");
 import semver = require("semver");
 import AdmZip = require("adm-zip");
+import favicons = require("favicons");
 
 async function loadManifest() {
     const file = fs.readFileSync('MANIFEST.yaml', 'utf8')
@@ -64,13 +65,61 @@ function spawnChildProcess(command: string, args: string[] = [], options = {}) {
     });
 }
 
+async function generateSimpleFavicon({ sourceFile, outputDir, fileName }: { sourceFile: string, outputDir: string, fileName: string }) {
+    try {
+        // 1. Configure to only generate the standard favicon
+        console.log('Generating favicon.ico...');
+        const response = await favicons.favicons(sourceFile, {
+            icons: {
+                android: false,
+                appleIcon: false,
+                appleStartup: false,
+                favicons: true, // This enables the .ico file
+                windows: false,
+                yandex: false
+            }
+        });
+
+        // 2. Find the specific .ico file in the response images array
+        const favicon = response.images.find(img => img.name === "favicon.ico");
+
+        if (favicon) {
+            await fs.writeFileSync(path.join(outputDir, fileName), favicon.contents);
+            console.log(`Success! Created: ${path.join(outputDir, fileName)}`);
+        } else {
+            console.error('Could not find favicon.ico in the generated output.');
+        }
+
+    } catch (error) {
+        console.error('Generation failed:', error);
+    }
+}
+
+interface MANIFEST {
+    manifest_version: string;
+    enclave_type: "node" | "golang" | "python";
+    app_version: string;
+    app_name: string;
+    enclave_name: string;
+    app_unique_identifier: string;
+    start_exec: string;
+    resources: {
+        logos: string[];
+        folders: string[];
+        files: string[];
+    }
+}
+
 
 async function main() {
-    let manifest = await loadManifest();
-    let userEnteredVersion = await acceptUserInputs({ existingVersion: manifest["app_version"] });
+    let manifest: MANIFEST = await loadManifest();
+    let userEnteredVersion = await acceptUserInputs({ existingVersion: manifest.app_version });
 
-    manifest["app_version"] = userEnteredVersion;
+    manifest.app_version = userEnteredVersion;
     fs.writeFileSync('MANIFEST.yaml', YAML.stringify(manifest, { indent: 4 }));
+
+    // Create the favicon here
+    await generateSimpleFavicon({ sourceFile: path.join("resources", "dist", "img", "logo.png"), outputDir: path.join("resources", "dist", "img"), fileName: "favicon.ico" });
 
     await spawnChildProcess("npm", ["run", "css:build"]);
     await spawnChildProcess("npm", ["run", "ui:build"]);
@@ -82,7 +131,7 @@ async function main() {
     fs.copyFileSync("package.json", path.join("artifacts", "package.json"));
     fs.copyFileSync("package-lock.json", path.join("artifacts", "package-lock.json"));
 
-    let foldersToCopy = manifest["resources"]["folders"] as string[];
+    let foldersToCopy = manifest.resources.folders;
     if (foldersToCopy && foldersToCopy.length > 0) {
         for (const folder of foldersToCopy) {
             fs.mkdirSync(path.join("artifacts", folder), { recursive: true });
@@ -90,7 +139,7 @@ async function main() {
         }
     }
 
-    let filesToCopy = manifest["resources"]["files"] as string[];
+    let filesToCopy = manifest.resources.files;
     if (filesToCopy && filesToCopy.length > 0) {
         for (const file of filesToCopy) {
             fs.copyFileSync(file, path.join("artifacts", file));
@@ -104,7 +153,7 @@ async function main() {
     zip.addLocalFolder(process.cwd());
     process.chdir("..");
 
-    const outputName = `${manifest["app_name"]}.enc`;
+    const outputName = `${manifest.app_name}.enc`;
 
     zip.writeZip(outputName);
     fs.rmSync(path.join("artifacts"), { recursive: true });

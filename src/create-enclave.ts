@@ -118,6 +118,7 @@ async function setupCommonNPMDependencies() {
         "@types/adm-zip",
         "typescript",
         "@types/node",
+        "favicons",
     ];
 
     await spawnChildProcess("npm", ["install", ...npmDevDependencies, "--save-dev"]);

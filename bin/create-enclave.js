@@ -184,6 +184,7 @@ function setupCommonNPMDependencies() {
                         "@types/adm-zip",
                         "typescript",
                         "@types/node",
+                        "favicons",
                     ];
                     return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDevDependencies, true), ["--save-dev"], false))];
                 case 2:
