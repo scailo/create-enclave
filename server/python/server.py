@@ -1,6 +1,8 @@
 import asyncio
 # Import aiohttp library for async requests
 import aiohttp
+from aiohttp_session import setup, get_session
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
 import os
 import sys
 import logging
@@ -8,9 +10,16 @@ import random
 from datetime import datetime
 from aiohttp import web
 from dotenv import load_dotenv
+import redis.asyncio as redis
+import hashlib
 
 # Import login module
 from scailo_sdk.login_api import AsyncLoginServiceClient, login
+from scailo_sdk.vault_api import AsyncVaultServiceClient
+from scailo_sdk.vault_commons import VerifyEnclaveIngressRequest
+from scailo_sdk.vendors_api import AsyncVendorsServiceClient
+from scailo_sdk.vendors import VendorsServiceFilterReq
+from scailo_sdk.base import BOOL_FILTER_TRUE
 
 # --- Configuration and Globals ---
 
@@ -26,12 +35,20 @@ class Config:
     USERNAME: str = ""
     PASSWORD: str = ""
 
+    REDIS_USERNAME: str = ""
+    REDIS_PASSWORD: str = ""
+    REDIS_URL: str = ""
+    WORKFLOW_EVENTS_CHANNEL: str = ""
+    COOKIE_SIGNATURE_SECRET: str = ""
+
 # Global state variables
 global_config = Config()
 production: bool = False
 index_page_cache: str = ""
 enclave_prefix: str = ""
 auth_token: str = ""
+
+encoded_cookie_signature_secret: bytes = b""
 
 # Constants
 LOGIN_INTERVAL_SECONDS = 3600 # 1 hour
@@ -59,6 +76,12 @@ def load_config():
     global_config.USERNAME = os.getenv("USERNAME") or ""
     global_config.PASSWORD = os.getenv("PASSWORD") or ""
 
+    global_config.REDIS_USERNAME = os.getenv("REDIS_USERNAME") or ""
+    global_config.REDIS_PASSWORD = os.getenv("REDIS_PASSWORD") or ""
+    global_config.REDIS_URL = os.getenv("REDIS_URL") or ""
+    global_config.WORKFLOW_EVENTS_CHANNEL = os.getenv("WORKFLOW_EVENTS_CHANNEL") or ""
+    global_config.COOKIE_SIGNATURE_SECRET = os.getenv("COOKIE_SIGNATURE_SECRET") or ""
+
     port_str = os.getenv("PORT", "8080")
     try:
         global_config.PORT = int(port_str)
@@ -83,9 +106,21 @@ def load_config():
     if not global_config.PASSWORD:
         log.error("PASSWORD not set (required for API login stub)")
         exit_code = 1
+    if not global_config.REDIS_URL:
+        log.error("REDIS_URL not set")
+        exit_code = 1
+    if not global_config.WORKFLOW_EVENTS_CHANNEL:
+        log.error("WORKFLOW_EVENTS_CHANNEL not set")
+        exit_code = 1
+    if not global_config.COOKIE_SIGNATURE_SECRET:
+        log.error("COOKIE_SIGNATURE_SECRET not set")
+        exit_code = 1
 
     global enclave_prefix
     enclave_prefix = f"/enclave/{global_config.ENCLAVE_NAME}"
+
+    global encoded_cookie_signature_secret
+    encoded_cookie_signature_secret = hashlib.sha256(global_config.COOKIE_SIGNATURE_SECRET.encode('utf-8')).digest()
     
     if exit_code != 0:
         log.error("Configuration errors found. Exiting.")
@@ -103,7 +138,42 @@ async def perform_login():
         login_resp = await login_client.login_as_employee_primary(login.UserLoginRequest(username=global_config.USERNAME, plain_text_password=global_config.PASSWORD))
         if login_resp.auth_token:
             auth_token = login_resp.auth_token
+
+            # print("Auth token is: ", auth_token)
             log.info(f"Successfully logged in...")
+
+
+async def setup_redis(app: web.Application):
+    # Connect to the Redis server and create a PubSub instance
+    try:
+        [redis_host, redis_port] = global_config.REDIS_URL.split(":")
+        redis_client = redis.Redis(host=redis_host, port=int(redis_port), decode_responses=True)
+        pubsub = redis_client.pubsub()
+        print("Connected to Redis server.")
+
+        # Subscribe and listen for messages
+        await pubsub.subscribe(global_config.WORKFLOW_EVENTS_CHANNEL)
+        print(f"Subscribed to {global_config.WORKFLOW_EVENTS_CHANNEL}. Waiting for messages...")
+
+        async for message in pubsub.listen():
+            print(f"Received: {message}")
+    except redis.exceptions.ConnectionError as e:
+        print(f"Error connecting to Redis: {e}")
+        exit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        await pubsub.unsubscribe(global_config.WORKFLOW_EVENTS_CHANNEL)
+        print(f"Unsubscribed from {global_config.WORKFLOW_EVENTS_CHANNEL}.")
+        await redis_client.aclose()
+
+
+def append_default_header(auth_token_to_add: str | None = None):
+    if not auth_token_to_add:
+        auth_token_to_add = auth_token
+    d = dict[str, str]()
+    d["auth_token"] = auth_token_to_add
+    return d
     
     
 async def login_to_api_task(app: web.Application):
@@ -213,22 +283,89 @@ async def no_route_handler(request: web.Request):
     log.info(f"No route found for {request.path}. Redirecting to {ui_path}")
     raise web.HTTPTemporaryRedirect(location=ui_path)
 
+
+async def ingress_handler(request: web.Request):
+    """Handles the ingress -> sets the auth token and redirects to the entry point"""
+    try:
+        if not production:
+            # In dev, use the default auth token
+            session = await get_session(request)
+            session[f'{global_config.ENCLAVE_NAME}_auth_token'] = auth_token
+            session.max_age = 3600
+            # Redirect to the UI path
+            ui_path = f"{enclave_prefix}/ui"
+            return web.HTTPTemporaryRedirect(location=ui_path)
+        else:
+            # `${enclavePrefix}/ingress/:token`
+            # Get the token
+            token = request.match_info.get('token')
+            if not token:
+                return web.Response(status=400, text="Missing token")
+            async with aiohttp.ClientSession() as http_client:
+                vault_client = AsyncVaultServiceClient(global_config.SCAILO_API, http_client)
+                ingress = await vault_client.verify_enclave_ingress(VerifyEnclaveIngressRequest(token=token), extra_headers=append_default_header(auth_token))
+                session = await get_session(request)
+                session[f'{global_config.ENCLAVE_NAME}_auth_token'] = ingress.auth_token
+                session.max_age = ingress.expires_at
+                # Redirect to the UI path
+                ui_path = f"{enclave_prefix}/ui"
+                return web.HTTPTemporaryRedirect(location=ui_path)
+
+    except Exception as e:
+        return web.Response(status=500, text=str(e))
+    
+async def protected_api_random_handler(request: web.Request):
+    """Handles the /protected/api/random endpoint."""
+    try:
+        session = await get_session(request)
+        user_auth_token = session.get(f'{global_config.ENCLAVE_NAME}_auth_token')
+        
+        if not user_auth_token:
+            return web.Response(text="Session expired or invalid. Please login again.", status=401)
+        if len(user_auth_token) == 0:
+            return web.Response(text="Session expired or invalid. Please login again.", status=401)
+
+        random_number = random.random()
+        async with aiohttp.ClientSession() as http_client:
+            vendors_client = AsyncVendorsServiceClient(global_config.SCAILO_API, http_client)
+            vendors_list = (await vendors_client.filter(VendorsServiceFilterReq(is_active=BOOL_FILTER_TRUE, count=-1), extra_headers=append_default_header(auth_token))).list
+            resp_vendors = []
+            for vendor in vendors_list:
+                d = {}
+                d["code"] = vendor.code
+                resp_vendors.append(d)
+            return web.json_response({"random": random_number, "vendors": resp_vendors}, status=200)
+    except Exception as e:
+        return web.Response(status=500, text=str(e))
+
 # --- Background Task Management ---
 
 async def start_background_tasks(app: web.Application):
     """Starts the recurring login task and stores the reference."""
     # Create the task and immediately schedule it, storing the task object
-    task = asyncio.create_task(login_to_api_task(app))
-    app['login_task'] = task
+    _login_to_api_task = asyncio.create_task(login_to_api_task(app))
+    app['login_to_api_task'] = _login_to_api_task
+
+    _setup_redis_task = asyncio.create_task(setup_redis(app))
+    app['_setup_redis_task'] = _setup_redis_task
+
 
 async def cleanup_background_tasks(app: web.Application):
     """Cancels the recurring login task on application shutdown."""
-    task = app.get('login_task')
-    if task:
+    _login_to_api_task = app.get('login_to_api_task')
+    if _login_to_api_task:
         log.info("Cancelling API login task...")
-        task.cancel()
+        _login_to_api_task.cancel()
         # Wait for the task to finish, ignoring the expected CancelledError
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(_login_to_api_task, return_exceptions=True)
+        log.info("API login task cancelled successfully.")
+
+    _setup_redis_task = app.get('_setup_redis_task')
+    if _setup_redis_task:
+        log.info("Cancelling API login task...")
+        _setup_redis_task.cancel()
+        # Wait for the task to finish, ignoring the expected CancelledError
+        await asyncio.gather(_setup_redis_task, return_exceptions=True)
         log.info("API login task cancelled successfully.")
 
 
@@ -242,6 +379,16 @@ def create_app() -> web.Application:
     # Initialize aiohttp application
     app = web.Application()
 
+    # 4. Global Middleware Setup
+    # max_age here sets the default for all sessions (e.g., 24 hours)
+    setup(app, EncryptedCookieStorage(
+        encoded_cookie_signature_secret,
+        cookie_name=f"{global_config.ENCLAVE_NAME}_auth_token",
+        max_age=86400,  # 24 hours in seconds
+        httponly=True,  # Prevents JavaScript access (XSS protection)
+        samesite="Lax"  # CSRF protection
+    ))
+
     # --- 1. Register Static Routes ---
     static_route_path = f"{enclave_prefix}/resources/dist"
     app.router.add_static(static_route_path, "resources/dist", name="static_resources")
@@ -254,6 +401,9 @@ def create_app() -> web.Application:
     
     # --- 3. API Endpoint ---
     app.router.add_get(f"{enclave_prefix}/api/random", random_api_handler)
+
+    app.router.add_get(f"{enclave_prefix}/ingress/{{token}}", ingress_handler)
+    app.router.add_get(f"{enclave_prefix}/protected/api/random", protected_api_random_handler)
     
     # --- 4. Index Page / SPA Routes ---
     ui_path_root = f"{enclave_prefix}/ui"
