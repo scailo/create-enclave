@@ -7,7 +7,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gorilla/securecookie v1.1.2
 	github.com/joho/godotenv v1.5.1
-	github.com/scailo/go-sdk v0.1.4
+	github.com/scailo/go-sdk v0.1.6
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
 )
