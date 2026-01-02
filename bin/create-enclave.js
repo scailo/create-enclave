@@ -346,8 +346,8 @@ function createBuildScripts(_a) {
                 scripts.push(["start", "npx tsx server.ts"]); // This is in production
             }
             else if (enclaveType == "golang") {
-                scripts.push(["dev:start", "go run server.go"]);
-                scripts.push(["start", "go run server.go"]); // This is in production
+                scripts.push(["dev:start", "go run ."]);
+                scripts.push(["start", "go run ."]); // This is in production
             }
             else if (enclaveType == "python") {
                 scripts.push(["dev:start", "uv run server.py"]);
@@ -410,7 +410,7 @@ function createManifest(_a) {
                 startExec = "npm start";
             }
             else if (enclaveType == "golang") {
-                startExec = "go run server.go";
+                startExec = "go run .";
             }
             else if (enclaveType == "python") {
                 startExec = "uv run server.py";
