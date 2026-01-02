@@ -258,17 +258,20 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
     fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 2), { flag: "w", flush: true });
 }
 
-async function createIndexHTML({ appName, version, enclaveName }: { appName: string, version: string, enclaveName: string }) {
+async function createIndexHTML({ appName, version, enclaveName, entryPoint }: { appName: string, version: string, enclaveName: string, entryPoint: entryPointType }) {
+
+    const hrefPrefix = entryPoint == "platform_redirect" ? `/enclave/${enclaveName}` : ``;
+
     const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="/enclave/${enclaveName}/resources/dist/img/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="${hrefPrefix}/resources/dist/img/favicon.ico" type="image/x-icon">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <link rel="preload" as="script" href="/enclave/${enclaveName}/resources/dist/js/bundle.src.min.js">
-    <link rel="stylesheet" href="/enclave/${enclaveName}/resources/dist/css/bundle.css">
+    <link rel="preload" as="script" href="${hrefPrefix}/resources/dist/js/bundle.src.min.js">
+    <link rel="stylesheet" href="${hrefPrefix}/resources/dist/css/bundle.css">
     <title>${appName}</title>
 </head>
 <body class="text-gray-800">
@@ -277,7 +280,7 @@ async function createIndexHTML({ appName, version, enclaveName }: { appName: str
     </div>
     <div id="container" class="container"></div>
     <!-- Attach the JS bundle here -->
-    <script src="/enclave/${enclaveName}/resources/dist/js/bundle.src.min.js"></script>
+    <script src="${hrefPrefix}/resources/dist/js/bundle.src.min.js"></script>
 </body>
 </html>
 `;
@@ -286,7 +289,7 @@ async function createIndexHTML({ appName, version, enclaveName }: { appName: str
     fs.writeFileSync("index.html", html.trim(), { flag: "w", flush: true });
 }
 
-async function createEntryTS({ appEntryTSPath, enclaveName }: { appEntryTSPath: string, enclaveName: string }) {
+async function createEntryTS({ appEntryTSPath, enclaveName, entryPoint }: { appEntryTSPath: string, enclaveName: string, entryPoint: entryPointType }) {
     const script = `
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Router } from "./router";
@@ -317,7 +320,7 @@ async function wait(ms: number) {
 /** Starts the router  */
 function startRouter() {
     let r = new Router();
-    const routePrefix = \`/enclave/\${enclaveName}\`;
+    const routePrefix = ${entryPoint == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``"};
     r.add(\`\${routePrefix}/ui\`, async (ctx) => {
         const container = document.getElementById("container") as HTMLDivElement;
         while (true) {
@@ -685,8 +688,8 @@ async function main() {
 
     fs.writeFileSync(appCSSPath, [`@import "tailwindcss"`, daisyUiPlugin].map(a => `${a};`).join("\n"), { flag: "w", flush: true });
 
-    await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier });
-    await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier });
+    await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
+    await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
     await createRouterTS({ routerEntryTSPath });
     await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate, selectedEntryPoint });
     await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier });
