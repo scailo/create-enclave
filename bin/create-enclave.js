@@ -509,20 +509,23 @@ function runPostSetupScripts(_a) {
                 case 2:
                     _c.sent();
                     if (!(enclaveType == "node")) return [3 /*break*/, 3];
-                    return [3 /*break*/, 7];
+                    return [3 /*break*/, 8];
                 case 3:
-                    if (!(enclaveType == "golang")) return [3 /*break*/, 5];
+                    if (!(enclaveType == "golang")) return [3 /*break*/, 6];
                     return [4 /*yield*/, spawnChildProcess("go", ["mod", "tidy"])];
                 case 4:
                     _c.sent();
-                    return [3 /*break*/, 7];
+                    return [4 /*yield*/, spawnChildProcess("goimports", ["-w", "."])];
                 case 5:
-                    if (!(enclaveType == "python")) return [3 /*break*/, 7];
-                    return [4 /*yield*/, spawnChildProcess("uv", ["sync", "--all-groups"])];
-                case 6:
                     _c.sent();
-                    _c.label = 7;
-                case 7: return [2 /*return*/];
+                    return [3 /*break*/, 8];
+                case 6:
+                    if (!(enclaveType == "python")) return [3 /*break*/, 8];
+                    return [4 /*yield*/, spawnChildProcess("uv", ["sync", "--all-groups"])];
+                case 7:
+                    _c.sent();
+                    _c.label = 8;
+                case 8: return [2 /*return*/];
             }
         });
     });
@@ -576,7 +579,7 @@ function main() {
                     return [4 /*yield*/, createManifest({ appName: applicationName, version: version, enclaveName: applicationIdentifier, appIdentifier: "".concat(applicationIdentifier, ".enc"), enclaveType: selectedEnclaveTemplate, selectedEntryPoint: selectedEntryPoint })];
                 case 9:
                     _b.sent();
-                    return [4 /*yield*/, createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier })];
+                    return [4 /*yield*/, createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint })];
                 case 10:
                     _b.sent();
                     return [4 /*yield*/, createBuildScripts({ appCSSPath: appCSSPath, distFolderName: distFolderName, appEntryTSPath: appEntryTSPath, enclaveType: selectedEnclaveTemplate })];

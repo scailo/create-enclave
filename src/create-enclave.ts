@@ -649,6 +649,7 @@ async function runPostSetupScripts({ enclaveType }: { enclaveType: enclaveTempla
 
     } else if (enclaveType == "golang") {
         await spawnChildProcess("go", ["mod", "tidy"]);
+        await spawnChildProcess("goimports", ["-w", "."]);
     } else if (enclaveType == "python") {
         await spawnChildProcess("uv", ["sync", "--all-groups"]);
     }
@@ -692,7 +693,7 @@ async function main() {
     await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
     await createRouterTS({ routerEntryTSPath });
     await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate, selectedEntryPoint });
-    await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier });
+    await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
 
     await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType: selectedEnclaveTemplate });
     await fixTSConfig();
