@@ -174,10 +174,14 @@ function main() {
                     return [4 /*yield*/, acceptUserInputs({ existingVersion: manifest.app_version })];
                 case 2:
                     userEnteredVersion = _b.sent();
+                    if (manifest.entry_point !== "platform_redirect" && manifest.entry_point !== "direct_url") {
+                        console.log("Invalid entry point: " + manifest.entry_point + ". Should be either 'platform_redirect' or 'direct_url'");
+                        process.exit(1);
+                    }
                     manifest.app_version = userEnteredVersion;
                     fs.writeFileSync('MANIFEST.yaml', YAML.stringify(manifest, { indent: 4 }));
                     // Create the favicon here
-                    return [4 /*yield*/, generateSimpleFavicon({ sourceFile: path.join("resources", "dist", "logo.png"), outputDir: path.join("resources", "dist"), fileName: "favicon.ico" })];
+                    return [4 /*yield*/, generateSimpleFavicon({ sourceFile: path.join("resources", "dist", "img", "logo.png"), outputDir: path.join("resources", "dist", "img"), fileName: "favicon.ico" })];
                 case 3:
                     // Create the favicon here
                     _b.sent();

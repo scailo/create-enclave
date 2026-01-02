@@ -14,8 +14,10 @@ let version = "0.0.1";
 const rootFolder = path.dirname(__dirname);
 
 type enclaveTemplateType = "node" | "golang" | "python";
+type entryPointType = "platform_redirect" | "direct_url";
 
 let selectedEnclaveTemplate: enclaveTemplateType = "node";
+let selectedEntryPoint: entryPointType = "platform_redirect";
 
 async function acceptUserInputs() {
     applicationName = (await prompt.input({
@@ -48,10 +50,19 @@ async function acceptUserInputs() {
         ], default: ""
     })).trim() as enclaveTemplateType;
 
+    selectedEntryPoint = (await prompt.select({
+        message: "Select the Entry Point Type",
+        choices: [
+            { name: "Platform Redirect", value: "platform_redirect", description: `Entry Point will be managed by the Platform. The application will need to implement: GET /enclave/${applicationIdentifier}/ingress/{token}` },
+            { name: "Direct URL", value: "direct_url", description: "Entry Point will be managed by the Application. The application will need to implement: GET /" },
+        ], default: "platform_redirect"
+    })).trim() as entryPointType;
+
     console.log(`Application Name: ${applicationName}`);
     console.log(`Application Identifier: ${applicationIdentifier}`);
     console.log(`Version: ${version}`);
     console.log(`Enclave Template: ${selectedEnclaveTemplate}`);
+    console.log(`Entry Point Type: ${selectedEntryPoint}`);
 }
 
 function spawnChildProcess(command: string, args: string[] = [], options = {}) {
@@ -506,7 +517,7 @@ export interface context {
     fs.writeFileSync(routerEntryTSPath, script.trim(), { flag: "w", flush: true });
 }
 
-async function createManifest({ appName, version, enclaveName, appIdentifier, enclaveType }: { appName: string, version: string, enclaveName: string, appIdentifier: string, enclaveType: enclaveTemplateType }) {
+async function createManifest({ appName, version, enclaveName, appIdentifier, enclaveType, selectedEntryPoint }: { appName: string, version: string, enclaveName: string, appIdentifier: string, enclaveType: enclaveTemplateType, selectedEntryPoint: entryPointType }) {
     let startExec = "";
     if (enclaveType == "node") {
         startExec = `npm start`;
@@ -523,6 +534,7 @@ app_name: ${appName}
 enclave_name: ${enclaveName}
 app_unique_identifier: "${appIdentifier}"
 start_exec: "${startExec}"
+entry_point: "${selectedEntryPoint}"
 resources:
     logos:
         - resources/dist/img/logo.png
@@ -676,7 +688,7 @@ async function main() {
     await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier });
     await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier });
     await createRouterTS({ routerEntryTSPath });
-    await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate });
+    await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate, selectedEntryPoint });
     await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier });
 
     await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType: selectedEnclaveTemplate });

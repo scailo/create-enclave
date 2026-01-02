@@ -68,6 +68,7 @@ var applicationName = "Scailo Test Widget";
 var version = "0.0.1";
 var rootFolder = path.dirname(__dirname);
 var selectedEnclaveTemplate = "node";
+var selectedEntryPoint = "platform_redirect";
 function acceptUserInputs() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -106,10 +107,20 @@ function acceptUserInputs() {
                         })];
                 case 4:
                     selectedEnclaveTemplate = (_a.sent()).trim();
+                    return [4 /*yield*/, prompt.select({
+                            message: "Select the Entry Point Type",
+                            choices: [
+                                { name: "Platform Redirect", value: "platform_redirect", description: "Entry Point will be managed by the Platform. The application will need to implement: GET /enclave/".concat(applicationIdentifier, "/ingress/{token}") },
+                                { name: "Direct URL", value: "direct_url", description: "Entry Point will be managed by the Application. The application will need to implement: GET /" },
+                            ], default: "platform_redirect"
+                        })];
+                case 5:
+                    selectedEntryPoint = (_a.sent()).trim();
                     console.log("Application Name: ".concat(applicationName));
                     console.log("Application Identifier: ".concat(applicationIdentifier));
                     console.log("Version: ".concat(version));
                     console.log("Enclave Template: ".concat(selectedEnclaveTemplate));
+                    console.log("Entry Point Type: ".concat(selectedEntryPoint));
                     return [2 /*return*/];
             }
         });
@@ -403,7 +414,7 @@ function createRouterTS(_a) {
 function createManifest(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
         var startExec, manifest;
-        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, appIdentifier = _b.appIdentifier, enclaveType = _b.enclaveType;
+        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, appIdentifier = _b.appIdentifier, enclaveType = _b.enclaveType, selectedEntryPoint = _b.selectedEntryPoint;
         return __generator(this, function (_c) {
             startExec = "";
             if (enclaveType == "node") {
@@ -415,7 +426,7 @@ function createManifest(_a) {
             else if (enclaveType == "python") {
                 startExec = "uv run server.py";
             }
-            manifest = "\nmanifest_version: 1\nenclave_type: ".concat(enclaveType, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
+            manifest = "\nmanifest_version: 1\nenclave_type: ".concat(enclaveType, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nentry_point: \"").concat(selectedEntryPoint, "\"\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
             if (enclaveType == "node") {
                 manifest += "\n    files:\n        - index.html\n        - server.ts\n    ";
             }
@@ -561,7 +572,7 @@ function main() {
                     return [4 /*yield*/, createRouterTS({ routerEntryTSPath: routerEntryTSPath })];
                 case 8:
                     _b.sent();
-                    return [4 /*yield*/, createManifest({ appName: applicationName, version: version, enclaveName: applicationIdentifier, appIdentifier: "".concat(applicationIdentifier, ".enc"), enclaveType: selectedEnclaveTemplate })];
+                    return [4 /*yield*/, createManifest({ appName: applicationName, version: version, enclaveName: applicationIdentifier, appIdentifier: "".concat(applicationIdentifier, ".enc"), enclaveType: selectedEnclaveTemplate, selectedEntryPoint: selectedEntryPoint })];
                 case 9:
                     _b.sent();
                     return [4 /*yield*/, createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier })];
