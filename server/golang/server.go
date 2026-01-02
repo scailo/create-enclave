@@ -138,7 +138,7 @@ func loadConfig() {
 		exitCode = 1
 	}
 
-	enclavePrefix = fmt.Sprintf("/enclave/%s", GlobalConfig.EnclaveName)
+	enclavePrefix = getEnclavePrefix(GlobalConfig.EnclaveName)
 
 	if exitCode != 0 {
 		os.Exit(exitCode)
@@ -399,6 +399,11 @@ func main() {
 
 	router.GET(uiPath1, indexHandler)
 	router.GET(uiPath2, indexHandler)
+
+	// Implicit redirect for entry_point = direct_url
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%s/ui", enclavePrefix))
+	})
 
 	// ------------------------------------------------------------------------------------------------------------------------
 	// Enclave Ingress handler
