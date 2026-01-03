@@ -114,7 +114,7 @@ async function loginToAPI() {
     } finally {
         setTimeout(() => {
             loginToAPI();
-        }, 3600 * 1000);
+        }, 3600 * 12 * 1000);
     }
 }
 

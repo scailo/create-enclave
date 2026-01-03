@@ -60,8 +60,8 @@ var (
 )
 
 const (
-	// 1-hour interval (3600)
-	loginInterval = 3600 * time.Second
+	// 12-hour interval (3600 * 12)
+	loginInterval = 3600 * 12 * time.Second
 	indexHTMLFile = "index.html"
 )
 

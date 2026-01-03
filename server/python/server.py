@@ -52,7 +52,7 @@ auth_token: str = ""
 encoded_cookie_signature_secret: bytes = b""
 
 # Constants
-LOGIN_INTERVAL_SECONDS = 3600 # 1 hour
+LOGIN_INTERVAL_SECONDS = 3600 * 12 # 12 hour
 INDEX_HTML_FILE = "index.html"
 
 # --- Initialization and Config Loading ---
