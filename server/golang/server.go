@@ -400,7 +400,7 @@ func main() {
 	router.GET(uiPath1, indexHandler)
 	router.GET(uiPath2, indexHandler)
 
-	// Implicit redirect for entry_point = direct_url
+	// Implicit redirect for entry_point_management = direct_url
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%s/ui", enclavePrefix))
 	})

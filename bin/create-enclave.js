@@ -68,7 +68,7 @@ var applicationName = "Scailo Test Widget";
 var version = "0.0.1";
 var rootFolder = path.dirname(__dirname);
 var selectedEnclaveTemplate = "node";
-var selectedEntryPoint = "platform_redirect";
+var selectedEntryPointManagement = "platform_redirect";
 function acceptUserInputs() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -115,12 +115,12 @@ function acceptUserInputs() {
                             ], default: "platform_redirect"
                         })];
                 case 5:
-                    selectedEntryPoint = (_a.sent()).trim();
+                    selectedEntryPointManagement = (_a.sent()).trim();
                     console.log("Application Name: ".concat(applicationName));
                     console.log("Application Identifier: ".concat(applicationIdentifier));
                     console.log("Version: ".concat(version));
                     console.log("Enclave Template: ".concat(selectedEnclaveTemplate));
-                    console.log("Entry Point Type: ".concat(selectedEntryPoint));
+                    console.log("Entry Point Type: ".concat(selectedEntryPointManagement));
                     return [2 /*return*/];
             }
         });
@@ -378,9 +378,9 @@ function createBuildScripts(_a) {
 function createIndexHTML(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
         var hrefPrefix, html;
-        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, entryPoint = _b.entryPoint;
+        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, selectedEntryPointManagement = _b.selectedEntryPointManagement;
         return __generator(this, function (_c) {
-            hrefPrefix = entryPoint == "platform_redirect" ? "/enclave/".concat(enclaveName) : "";
+            hrefPrefix = selectedEntryPointManagement == "platform_redirect" ? "/enclave/".concat(enclaveName) : "";
             html = "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link rel=\"shortcut icon\" href=\"".concat(hrefPrefix, "/resources/dist/img/favicon.ico\" type=\"image/x-icon\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge,chrome=1\" />\n    <link rel=\"preload\" as=\"script\" href=\"").concat(hrefPrefix, "/resources/dist/js/bundle.src.min.js\">\n    <link rel=\"stylesheet\" href=\"").concat(hrefPrefix, "/resources/dist/css/bundle.css\">\n    <title>").concat(appName, "</title>\n</head>\n<body class=\"text-gray-800\">\n    <div class=\"container text-center\">\n        <h1 class=\"text-3xl font-bold\">").concat(appName, "</h1>\n    </div>\n    <div id=\"container\" class=\"container\"></div>\n    <!-- Attach the JS bundle here -->\n    <script src=\"").concat(hrefPrefix, "/resources/dist/js/bundle.src.min.js\"></script>\n</body>\n</html>\n");
             // Create index.html
             fs.writeFileSync("index.html", html.trim(), { flag: "w", flush: true });
@@ -391,9 +391,9 @@ function createIndexHTML(_a) {
 function createEntryTS(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
         var script;
-        var appEntryTSPath = _b.appEntryTSPath, enclaveName = _b.enclaveName, entryPoint = _b.entryPoint;
+        var appEntryTSPath = _b.appEntryTSPath, enclaveName = _b.enclaveName, selectedEntryPointManagement = _b.selectedEntryPointManagement;
         return __generator(this, function (_c) {
-            script = "\nimport { createConnectTransport } from \"@connectrpc/connect-web\";\nimport { Router } from \"./router\";\n\nexport const enclaveName = \"".concat(enclaveName, "\";\n\n/**\n * Message handler type for Scailo widget. Receives messages from the parent application\n */\nexport type ScailoWidgetMessage = {\n    type: \"refresh\",\n    payload: any\n};\n\n/**\n * Message handler for Scailo widget\n */\nwindow.addEventListener(\"message\", (evt: MessageEvent<ScailoWidgetMessage>) => {\n    if (evt.data.type == \"refresh\") {\n        location.reload();\n    }\n});\n\nasync function wait(ms: number) {\n    return new Promise(resolve => setTimeout(resolve, ms));\n}\n\n/** Starts the router  */\nfunction startRouter() {\n    let r = new Router();\n    const routePrefix = ").concat(entryPoint == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``", ";\n    r.add(`${routePrefix}/ui`, async (ctx) => {\n        const container = document.getElementById(\"container\") as HTMLDivElement;\n        while (true) {\n            await wait(1000);\n            let payload = await (await fetch(`${routePrefix}/api/random`, { method: \"GET\", headers: { \"Content-Type\": \"application/json\" } })).json() as { random: number };\n            container.innerHTML = payload.random.toString();\n        }\n    });\n\n    r.add(`${routePrefix}/404`, async (ctx) => {\n        handlePageNotFound(ctx);\n    });\n\n    r.setDefault((ctx) => {\n        location.href = `${routePrefix}/ui`;\n    });\n\n    r.start();\n}\n\n/** Handles page not found */\nfunction handlePageNotFound(ctx: any) {\n    let content = <HTMLDivElement>document.getElementById(\"container\");\n    content.innerHTML = \"Invalid page\";\n}\n\nwindow.addEventListener(\"load\", async (evt) => {\n    evt.preventDefault();\n    startRouter();\n});\n\nexport function getReadTransport() {\n    return createConnectTransport({\n        // Need to use binary format (at least for the time being)\n        baseUrl: location.origin, useBinaryFormat: false, interceptors: []\n    });\n}\n");
+            script = "\nimport { createConnectTransport } from \"@connectrpc/connect-web\";\nimport { Router } from \"./router\";\n\nexport const enclaveName = \"".concat(enclaveName, "\";\n\n/**\n * Message handler type for Scailo widget. Receives messages from the parent application\n */\nexport type ScailoWidgetMessage = {\n    type: \"refresh\",\n    payload: any\n};\n\n/**\n * Message handler for Scailo widget\n */\nwindow.addEventListener(\"message\", (evt: MessageEvent<ScailoWidgetMessage>) => {\n    if (evt.data.type == \"refresh\") {\n        location.reload();\n    }\n});\n\nasync function wait(ms: number) {\n    return new Promise(resolve => setTimeout(resolve, ms));\n}\n\n/** Starts the router  */\nfunction startRouter() {\n    let r = new Router();\n    const routePrefix = ").concat(selectedEntryPointManagement == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``", ";\n    r.add(`${routePrefix}/ui`, async (ctx) => {\n        const container = document.getElementById(\"container\") as HTMLDivElement;\n        while (true) {\n            await wait(1000);\n            let payload = await (await fetch(`${routePrefix}/api/random`, { method: \"GET\", headers: { \"Content-Type\": \"application/json\" } })).json() as { random: number };\n            container.innerHTML = payload.random.toString();\n        }\n    });\n\n    r.add(`${routePrefix}/404`, async (ctx) => {\n        handlePageNotFound(ctx);\n    });\n\n    r.setDefault((ctx) => {\n        location.href = `${routePrefix}/ui`;\n    });\n\n    r.start();\n}\n\n/** Handles page not found */\nfunction handlePageNotFound(ctx: any) {\n    let content = <HTMLDivElement>document.getElementById(\"container\");\n    content.innerHTML = \"Invalid page\";\n}\n\nwindow.addEventListener(\"load\", async (evt) => {\n    evt.preventDefault();\n    startRouter();\n});\n\nexport function getReadTransport() {\n    return createConnectTransport({\n        // Need to use binary format (at least for the time being)\n        baseUrl: location.origin, useBinaryFormat: false, interceptors: []\n    });\n}\n");
             // Create index.ts
             fs.writeFileSync(appEntryTSPath, script.trim(), { flag: "w", flush: true });
             return [2 /*return*/];
@@ -415,7 +415,7 @@ function createRouterTS(_a) {
 function createManifest(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
         var startExec, manifest;
-        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, appIdentifier = _b.appIdentifier, enclaveType = _b.enclaveType, selectedEntryPoint = _b.selectedEntryPoint;
+        var appName = _b.appName, version = _b.version, enclaveName = _b.enclaveName, appIdentifier = _b.appIdentifier, enclaveType = _b.enclaveType, selectedEntryPointManagement = _b.selectedEntryPointManagement;
         return __generator(this, function (_c) {
             startExec = "";
             if (enclaveType == "node") {
@@ -427,12 +427,12 @@ function createManifest(_a) {
             else if (enclaveType == "python") {
                 startExec = "uv run server.py";
             }
-            manifest = "\nmanifest_version: 1\nenclave_type: ".concat(enclaveType, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nentry_point: \"").concat(selectedEntryPoint, "\"\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
+            manifest = "\nmanifest_version: 1\nenclave_type: ".concat(enclaveType, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nentry_point_management: \"").concat(selectedEntryPointManagement, "\"\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
             if (enclaveType == "node") {
-                manifest += "\n    files:\n        - index.html\n        - server.ts\n    ";
+                manifest += "\n    files:\n        - index.html\n        - server.ts\n        - utils.ts\n    ";
             }
             else if (enclaveType == "golang") {
-                manifest += "\n    files:\n        - index.html\n        - server.go\n        - go.mod\n        - go.sum\n    ";
+                manifest += "\n    files:\n        - index.html\n        - server.go\n        - utils.go\n        - go.mod\n        - go.sum\n    ";
             }
             else if (enclaveType == "python") {
                 manifest += "\n    files:\n        - index.html\n        - server.py\n        - pyproject.toml\n        - uv.lock\n        - .python-version\n    ";
@@ -443,16 +443,26 @@ function createManifest(_a) {
         });
     });
 }
+function getUtilsForNode(entryPoint) {
+    var f = "\nexport function getEnclavePrefix(enclaveName: string): string {\n    return ".concat(entryPoint == "platform_redirect" ? '`/enclave/${enclaveName}`' : "\"\"", "\n}\n");
+    return f;
+}
+function getUtilsForGolang(entryPoint) {
+    var f = "\npackage main\n\nimport \"fmt\"\n\nfunc getEnclavePrefix(enclaveName string) string {\n\treturn ".concat(entryPoint == "platform_redirect" ? "fmt.Sprintf(\"/enclave/%s\", enclaveName)" : "\"\"", "\n}\n");
+    return f;
+}
 function createTestServer(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
         var envFile;
-        var enclaveType = _b.enclaveType, enclaveName = _b.enclaveName;
+        var enclaveType = _b.enclaveType, enclaveName = _b.enclaveName, entryPoint = _b.entryPoint;
         return __generator(this, function (_c) {
             if (enclaveType == "node") {
                 fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
+                fs.writeFileSync("utils.ts", getUtilsForNode(entryPoint).trim(), { flag: "w", flush: true });
             }
             else if (enclaveType == "golang") {
                 fs.copyFileSync(path.join(rootFolder, "server", "golang", "server.go"), "server.go");
+                fs.writeFileSync("utils.go", getUtilsForGolang(entryPoint).trim(), { flag: "w", flush: true });
                 fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.mod"), "go.mod");
                 fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
             }
@@ -567,19 +577,19 @@ function main() {
                     _a = createResourcesFolders(), appCSSPath = _a.appCSSPath, distFolderName = _a.distFolderName, appEntryTSPath = _a.appEntryTSPath, routerEntryTSPath = _a.routerEntryTSPath;
                     // Create the input css
                     fs.writeFileSync(appCSSPath, ["@import \"tailwindcss\"", daisyUiPlugin].map(function (a) { return "".concat(a, ";"); }).join("\n"), { flag: "w", flush: true });
-                    return [4 /*yield*/, createIndexHTML({ appName: applicationName, version: version, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint })];
+                    return [4 /*yield*/, createIndexHTML({ appName: applicationName, version: version, enclaveName: applicationIdentifier, selectedEntryPointManagement: selectedEntryPointManagement })];
                 case 6:
                     _b.sent();
-                    return [4 /*yield*/, createEntryTS({ appEntryTSPath: appEntryTSPath, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint })];
+                    return [4 /*yield*/, createEntryTS({ appEntryTSPath: appEntryTSPath, enclaveName: applicationIdentifier, selectedEntryPointManagement: selectedEntryPointManagement })];
                 case 7:
                     _b.sent();
                     return [4 /*yield*/, createRouterTS({ routerEntryTSPath: routerEntryTSPath })];
                 case 8:
                     _b.sent();
-                    return [4 /*yield*/, createManifest({ appName: applicationName, version: version, enclaveName: applicationIdentifier, appIdentifier: "".concat(applicationIdentifier, ".enc"), enclaveType: selectedEnclaveTemplate, selectedEntryPoint: selectedEntryPoint })];
+                    return [4 /*yield*/, createManifest({ appName: applicationName, version: version, enclaveName: applicationIdentifier, appIdentifier: "".concat(applicationIdentifier, ".enc"), enclaveType: selectedEnclaveTemplate, selectedEntryPointManagement: selectedEntryPointManagement })];
                 case 9:
                     _b.sent();
-                    return [4 /*yield*/, createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint })];
+                    return [4 /*yield*/, createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPointManagement })];
                 case 10:
                     _b.sent();
                     return [4 /*yield*/, createBuildScripts({ appCSSPath: appCSSPath, distFolderName: distFolderName, appEntryTSPath: appEntryTSPath, enclaveType: selectedEnclaveTemplate })];

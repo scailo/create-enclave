@@ -174,8 +174,8 @@ function main() {
                     return [4 /*yield*/, acceptUserInputs({ existingVersion: manifest.app_version })];
                 case 2:
                     userEnteredVersion = _b.sent();
-                    if (manifest.entry_point !== "platform_redirect" && manifest.entry_point !== "direct_url") {
-                        console.log("Invalid entry point: " + manifest.entry_point + ". Should be either 'platform_redirect' or 'direct_url'");
+                    if (manifest.entry_point_management !== "platform_redirect" && manifest.entry_point_management !== "direct_url") {
+                        console.log("Invalid entry point: " + manifest.entry_point_management + ". Should be either 'platform_redirect' or 'direct_url'");
                         process.exit(1);
                     }
                     manifest.app_version = userEnteredVersion;

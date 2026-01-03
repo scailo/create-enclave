@@ -7,6 +7,7 @@ import { BOOL_FILTER, getScailoClientForLoginService, getScailoClientForPurchase
 import { createClient } from "redis";
 import type { FastifyCookieOptions } from "@fastify/cookie";
 import cookie from "@fastify/cookie";
+import { getEnclavePrefix } from "./utils";
 
 const ENCLAVE_NAME = (process.env.ENCLAVE_NAME || "").trim();
 const SCAILO_API = (process.env.SCAILO_API || "").trim();
@@ -99,7 +100,7 @@ if (process.env.PRODUCTION && process.env.PRODUCTION == "true") {
     production = true;
 }
 
-const enclavePrefix = `/enclave/${ENCLAVE_NAME}`;
+const enclavePrefix = getEnclavePrefix(ENCLAVE_NAME);
 
 async function loginToAPI() {
     console.log("About to login to API")
@@ -141,6 +142,11 @@ server.get("/*", async (request, reply) => {
     }
     reply.header("Content-Type", "text/html");
     reply.send(replaceBundleCaches(indexPage));
+});
+
+// Implicit redirect for entry_point_management = direct_url
+server.get(`/`, async (request, reply) => {
+    reply.redirect(`${enclavePrefix}/ui`);
 });
 
 server.get(`${enclavePrefix}/ui`, async (request, reply) => {

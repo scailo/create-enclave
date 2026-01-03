@@ -548,6 +548,7 @@ resources:
     files:
         - index.html
         - server.ts
+        - utils.ts
     `
     } else if (enclaveType == "golang") {
         manifest += `
@@ -573,6 +574,14 @@ resources:
     fs.writeFileSync("MANIFEST.yaml", manifest.trim(), { flag: "w", flush: true });
 }
 
+function getUtilsForNode(entryPoint: entryPointManagement) {
+    const f = `
+export function getEnclavePrefix(enclaveName: string): string {
+    return ${entryPoint == "platform_redirect" ? '`/enclave/${enclaveName}`' : `""`}
+}
+`;
+    return f;
+}
 
 function getUtilsForGolang(entryPoint: entryPointManagement) {
     const f = `
@@ -591,6 +600,7 @@ func getEnclavePrefix(enclaveName string) string {
 async function createTestServer({ enclaveType, enclaveName, entryPoint }: { enclaveType: enclaveTemplateType, enclaveName: string, entryPoint: entryPointManagement }) {
     if (enclaveType == "node") {
         fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
+        fs.writeFileSync("utils.ts", getUtilsForNode(entryPoint).trim(), { flag: "w", flush: true });
     } else if (enclaveType == "golang") {
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "server.go"), "server.go");
         fs.writeFileSync("utils.go", getUtilsForGolang(entryPoint).trim(), { flag: "w", flush: true });
