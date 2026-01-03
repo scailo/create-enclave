@@ -14,10 +14,10 @@ let version = "0.0.1";
 const rootFolder = path.dirname(__dirname);
 
 type enclaveTemplateType = "node" | "golang" | "python";
-type entryPointType = "platform_redirect" | "direct_url";
+type entryPointManagement = "platform_redirect" | "direct_url";
 
 let selectedEnclaveTemplate: enclaveTemplateType = "node";
-let selectedEntryPoint: entryPointType = "platform_redirect";
+let selectedEntryPointManagement: entryPointManagement = "platform_redirect";
 
 async function acceptUserInputs() {
     applicationName = (await prompt.input({
@@ -50,19 +50,19 @@ async function acceptUserInputs() {
         ], default: ""
     })).trim() as enclaveTemplateType;
 
-    selectedEntryPoint = (await prompt.select({
+    selectedEntryPointManagement = (await prompt.select({
         message: "Select the Entry Point Type",
         choices: [
             { name: "Platform Redirect", value: "platform_redirect", description: `Entry Point will be managed by the Platform. The application will need to implement: GET /enclave/${applicationIdentifier}/ingress/{token}` },
             { name: "Direct URL", value: "direct_url", description: "Entry Point will be managed by the Application. The application will need to implement: GET /" },
         ], default: "platform_redirect"
-    })).trim() as entryPointType;
+    })).trim() as entryPointManagement;
 
     console.log(`Application Name: ${applicationName}`);
     console.log(`Application Identifier: ${applicationIdentifier}`);
     console.log(`Version: ${version}`);
     console.log(`Enclave Template: ${selectedEnclaveTemplate}`);
-    console.log(`Entry Point Type: ${selectedEntryPoint}`);
+    console.log(`Entry Point Type: ${selectedEntryPointManagement}`);
 }
 
 function spawnChildProcess(command: string, args: string[] = [], options = {}) {
@@ -258,9 +258,9 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
     fs.writeFileSync("package.json", JSON.stringify(packageJSON, null, 2), { flag: "w", flush: true });
 }
 
-async function createIndexHTML({ appName, version, enclaveName, entryPoint }: { appName: string, version: string, enclaveName: string, entryPoint: entryPointType }) {
+async function createIndexHTML({ appName, version, enclaveName, selectedEntryPointManagement }: { appName: string, version: string, enclaveName: string, selectedEntryPointManagement: entryPointManagement }) {
 
-    const hrefPrefix = entryPoint == "platform_redirect" ? `/enclave/${enclaveName}` : ``;
+    const hrefPrefix = selectedEntryPointManagement == "platform_redirect" ? `/enclave/${enclaveName}` : ``;
 
     const html = `
 <!DOCTYPE html>
@@ -289,7 +289,7 @@ async function createIndexHTML({ appName, version, enclaveName, entryPoint }: { 
     fs.writeFileSync("index.html", html.trim(), { flag: "w", flush: true });
 }
 
-async function createEntryTS({ appEntryTSPath, enclaveName, entryPoint }: { appEntryTSPath: string, enclaveName: string, entryPoint: entryPointType }) {
+async function createEntryTS({ appEntryTSPath, enclaveName, selectedEntryPointManagement }: { appEntryTSPath: string, enclaveName: string, selectedEntryPointManagement: entryPointManagement }) {
     const script = `
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { Router } from "./router";
@@ -320,7 +320,7 @@ async function wait(ms: number) {
 /** Starts the router  */
 function startRouter() {
     let r = new Router();
-    const routePrefix = ${entryPoint == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``"};
+    const routePrefix = ${selectedEntryPointManagement == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``"};
     r.add(\`\${routePrefix}/ui\`, async (ctx) => {
         const container = document.getElementById("container") as HTMLDivElement;
         while (true) {
@@ -520,7 +520,7 @@ export interface context {
     fs.writeFileSync(routerEntryTSPath, script.trim(), { flag: "w", flush: true });
 }
 
-async function createManifest({ appName, version, enclaveName, appIdentifier, enclaveType, selectedEntryPoint }: { appName: string, version: string, enclaveName: string, appIdentifier: string, enclaveType: enclaveTemplateType, selectedEntryPoint: entryPointType }) {
+async function createManifest({ appName, version, enclaveName, appIdentifier, enclaveType, selectedEntryPointManagement }: { appName: string, version: string, enclaveName: string, appIdentifier: string, enclaveType: enclaveTemplateType, selectedEntryPointManagement: entryPointManagement }) {
     let startExec = "";
     if (enclaveType == "node") {
         startExec = `npm start`;
@@ -537,7 +537,7 @@ app_name: ${appName}
 enclave_name: ${enclaveName}
 app_unique_identifier: "${appIdentifier}"
 start_exec: "${startExec}"
-entry_point: "${selectedEntryPoint}"
+entry_point_management: "${selectedEntryPointManagement}"
 resources:
     logos:
         - resources/dist/img/logo.png
@@ -554,6 +554,7 @@ resources:
     files:
         - index.html
         - server.go
+        - utils.go
         - go.mod
         - go.sum
     `
@@ -572,11 +573,27 @@ resources:
     fs.writeFileSync("MANIFEST.yaml", manifest.trim(), { flag: "w", flush: true });
 }
 
-async function createTestServer({ enclaveType, enclaveName }: { enclaveType: enclaveTemplateType, enclaveName: string }) {
+
+function getUtilsForGolang(entryPoint: entryPointManagement) {
+    const f = `
+package main
+
+import "fmt"
+
+func getEnclavePrefix(enclaveName string) string {
+	return ${entryPoint == "platform_redirect" ? `fmt.Sprintf("/enclave/%s", enclaveName)` : `""`}
+}
+`;
+
+    return f;
+}
+
+async function createTestServer({ enclaveType, enclaveName, entryPoint }: { enclaveType: enclaveTemplateType, enclaveName: string, entryPoint: entryPointManagement }) {
     if (enclaveType == "node") {
         fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
     } else if (enclaveType == "golang") {
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "server.go"), "server.go");
+        fs.writeFileSync("utils.go", getUtilsForGolang(entryPoint).trim(), { flag: "w", flush: true });
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.mod"), "go.mod");
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
     } else if (enclaveType == "python") {
@@ -689,11 +706,11 @@ async function main() {
 
     fs.writeFileSync(appCSSPath, [`@import "tailwindcss"`, daisyUiPlugin].map(a => `${a};`).join("\n"), { flag: "w", flush: true });
 
-    await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
-    await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
+    await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier, selectedEntryPointManagement });
+    await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier, selectedEntryPointManagement });
     await createRouterTS({ routerEntryTSPath });
-    await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate, selectedEntryPoint });
-    await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPoint });
+    await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate, selectedEntryPointManagement });
+    await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPointManagement });
 
     await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType: selectedEnclaveTemplate });
     await fixTSConfig();

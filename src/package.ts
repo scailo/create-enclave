@@ -103,7 +103,7 @@ interface MANIFEST {
     enclave_name: string;
     app_unique_identifier: string;
     start_exec: string;
-    entry_point: "platform_redirect" | "direct_url";
+    entry_point_management: "platform_redirect" | "direct_url";
     resources: {
         logos: string[];
         folders: string[];
@@ -115,8 +115,8 @@ interface MANIFEST {
 async function main() {
     let manifest: MANIFEST = await loadManifest();
     let userEnteredVersion = await acceptUserInputs({ existingVersion: manifest.app_version });
-    if (manifest.entry_point !== "platform_redirect" && manifest.entry_point !== "direct_url") {
-        console.log("Invalid entry point: " + manifest.entry_point + ". Should be either 'platform_redirect' or 'direct_url'");
+    if (manifest.entry_point_management !== "platform_redirect" && manifest.entry_point_management !== "direct_url") {
+        console.log("Invalid entry point: " + manifest.entry_point_management + ". Should be either 'platform_redirect' or 'direct_url'");
         process.exit(1);
     }
 
