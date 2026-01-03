@@ -435,7 +435,7 @@ function createManifest(_a) {
                 manifest += "\n    files:\n        - index.html\n        - server.go\n        - utils.go\n        - go.mod\n        - go.sum\n    ";
             }
             else if (enclaveType == "python") {
-                manifest += "\n    files:\n        - index.html\n        - server.py\n        - pyproject.toml\n        - uv.lock\n        - .python-version\n    ";
+                manifest += "\n    files:\n        - index.html\n        - server.py\n        - utils.py\n        - pyproject.toml\n        - uv.lock\n        - .python-version\n    ";
             }
             // Create MANIFEST.yaml
             fs.writeFileSync("MANIFEST.yaml", manifest.trim(), { flag: "w", flush: true });
@@ -449,6 +449,10 @@ function getUtilsForNode(entryPoint) {
 }
 function getUtilsForGolang(entryPoint) {
     var f = "\npackage main\n\nimport \"fmt\"\n\nfunc getEnclavePrefix(enclaveName string) string {\n\treturn ".concat(entryPoint == "platform_redirect" ? "fmt.Sprintf(\"/enclave/%s\", enclaveName)" : "\"\"", "\n}\n");
+    return f;
+}
+function getUtilsForPython(entryPoint) {
+    var f = "\ndef get_enclave_prefix(enclave_name: str) -> str:\n    return ".concat(entryPoint == "platform_redirect" ? 'f"/enclave/{enclave_name}"' : "\"\"", "\n");
     return f;
 }
 function createTestServer(_a) {
@@ -468,6 +472,7 @@ function createTestServer(_a) {
             }
             else if (enclaveType == "python") {
                 fs.copyFileSync(path.join(rootFolder, "server", "python", "server.py"), "server.py");
+                fs.writeFileSync("utils.py", getUtilsForPython(entryPoint).trim(), { flag: "w", flush: true });
                 fs.copyFileSync(path.join(rootFolder, "server", "python", "pyproject.toml"), "pyproject.toml");
                 fs.copyFileSync(path.join(rootFolder, "server", "python", "uv.lock"), "uv.lock");
                 fs.copyFileSync(path.join(rootFolder, "server", "python", ".python-version"), ".python-version");

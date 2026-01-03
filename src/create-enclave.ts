@@ -564,6 +564,7 @@ resources:
     files:
         - index.html
         - server.py
+        - utils.py
         - pyproject.toml
         - uv.lock
         - .python-version
@@ -597,6 +598,14 @@ func getEnclavePrefix(enclaveName string) string {
     return f;
 }
 
+function getUtilsForPython(entryPoint: entryPointManagement) {
+    const f = `
+def get_enclave_prefix(enclave_name: str) -> str:
+    return ${entryPoint == "platform_redirect" ? 'f"/enclave/{enclave_name}"' : `""`}
+`;
+    return f;
+}
+
 async function createTestServer({ enclaveType, enclaveName, entryPoint }: { enclaveType: enclaveTemplateType, enclaveName: string, entryPoint: entryPointManagement }) {
     if (enclaveType == "node") {
         fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
@@ -608,6 +617,7 @@ async function createTestServer({ enclaveType, enclaveName, entryPoint }: { encl
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
     } else if (enclaveType == "python") {
         fs.copyFileSync(path.join(rootFolder, "server", "python", "server.py"), "server.py");
+        fs.writeFileSync("utils.py", getUtilsForPython(entryPoint).trim(), { flag: "w", flush: true });
         fs.copyFileSync(path.join(rootFolder, "server", "python", "pyproject.toml"), "pyproject.toml");
         fs.copyFileSync(path.join(rootFolder, "server", "python", "uv.lock"), "uv.lock");
         fs.copyFileSync(path.join(rootFolder, "server", "python", ".python-version"), ".python-version");

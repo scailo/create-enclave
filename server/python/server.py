@@ -20,6 +20,7 @@ from scailo_sdk.vault_commons import VerifyEnclaveIngressRequest
 from scailo_sdk.vendors_api import AsyncVendorsServiceClient
 from scailo_sdk.vendors import VendorsServiceFilterReq
 from scailo_sdk.base import BOOL_FILTER_TRUE
+import utils
 
 # --- Configuration and Globals ---
 
@@ -117,7 +118,7 @@ def load_config():
         exit_code = 1
 
     global enclave_prefix
-    enclave_prefix = f"/enclave/{global_config.ENCLAVE_NAME}"
+    enclave_prefix = utils.get_enclave_prefix(global_config.ENCLAVE_NAME)
 
     global encoded_cookie_signature_secret
     encoded_cookie_signature_secret = hashlib.sha256(global_config.COOKIE_SIGNATURE_SECRET.encode('utf-8')).digest()
@@ -337,6 +338,10 @@ async def protected_api_random_handler(request: web.Request):
             return web.json_response({"random": random_number, "vendors": resp_vendors}, status=200)
     except Exception as e:
         return web.Response(status=500, text=str(e))
+    
+# Redirects to "{enclavePrefix}/ui"
+async def direct_url_entry_point_handler(request: web.Request):
+    return web.HTTPTemporaryRedirect(location=f"{enclave_prefix}/ui")
 
 # --- Background Task Management ---
 
@@ -404,6 +409,9 @@ def create_app() -> web.Application:
 
     app.router.add_get(f"{enclave_prefix}/ingress/{{token}}", ingress_handler)
     app.router.add_get(f"{enclave_prefix}/protected/api/random", protected_api_random_handler)
+
+    # Implicit redirect for entry_point_management = direct_url
+    app.router.add_get(f"/", direct_url_entry_point_handler)
     
     # --- 4. Index Page / SPA Routes ---
     ui_path_root = f"{enclave_prefix}/ui"
