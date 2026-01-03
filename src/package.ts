@@ -97,7 +97,7 @@ async function generateSimpleFavicon({ sourceFile, outputDir, fileName }: { sour
 
 interface MANIFEST {
     manifest_version: string;
-    enclave_type: "node" | "golang" | "python";
+    enclave_runtime: "node" | "golang" | "python";
     app_version: string;
     app_name: string;
     enclave_name: string;

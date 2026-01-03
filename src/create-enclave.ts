@@ -13,10 +13,10 @@ let applicationName = "Scailo Test Widget";
 let version = "0.0.1";
 const rootFolder = path.dirname(__dirname);
 
-type enclaveTemplateType = "node" | "golang" | "python";
+type enclaveRuntime = "node" | "golang" | "python";
 type entryPointManagement = "platform_redirect" | "direct_url";
 
-let selectedEnclaveTemplate: enclaveTemplateType = "node";
+let selectedEnclaveRuntime: enclaveRuntime = "node";
 let selectedEntryPointManagement: entryPointManagement = "platform_redirect";
 
 async function acceptUserInputs() {
@@ -41,14 +41,14 @@ async function acceptUserInputs() {
         validate: input => input.length > 0
     })).trim();
 
-    selectedEnclaveTemplate = (await prompt.select({
-        message: "Select the Enclave Template",
+    selectedEnclaveRuntime = (await prompt.select({
+        message: "Select the Enclave Runtime",
         choices: [
             { name: "Node", value: "node", description: "Create a Node based Enclave" },
             { name: "Golang", value: "golang", description: "Create a Golang based Enclave" },
             { name: "Python", value: "python", description: "Create a Python based Enclave" },
         ], default: ""
-    })).trim() as enclaveTemplateType;
+    })).trim() as enclaveRuntime;
 
     selectedEntryPointManagement = (await prompt.select({
         message: "Select the Entry Point Type",
@@ -61,7 +61,7 @@ async function acceptUserInputs() {
     console.log(`Application Name: ${applicationName}`);
     console.log(`Application Identifier: ${applicationIdentifier}`);
     console.log(`Version: ${version}`);
-    console.log(`Enclave Template: ${selectedEnclaveTemplate}`);
+    console.log(`Enclave Runtime: ${selectedEnclaveRuntime}`);
     console.log(`Entry Point Type: ${selectedEntryPointManagement}`);
 }
 
@@ -135,12 +135,12 @@ async function setupCommonNPMDependencies() {
     await spawnChildProcess("npm", ["install", ...npmDevDependencies, "--save-dev"]);
 }
 
-async function setupDependencies({ enclaveType }: { enclaveType: enclaveTemplateType }) {
-    if (enclaveType == "node") {
+async function setupDependencies({ selectedEnclaveRuntime }: { selectedEnclaveRuntime: enclaveRuntime }) {
+    if (selectedEnclaveRuntime == "node") {
         await setupDependenciesForNode();
-    } else if (enclaveType == "golang") {
+    } else if (selectedEnclaveRuntime == "golang") {
         await setupDependenciesForGolang();
-    } else if (enclaveType == "python") {
+    } else if (selectedEnclaveRuntime == "python") {
         await setupDependenciesForPython();
     }
 
@@ -220,7 +220,7 @@ function createResourcesFolders() {
     }
 }
 
-async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType }: { appCSSPath: string, distFolderName: string, appEntryTSPath: string, enclaveType: enclaveTemplateType }) {
+async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, selectedEnclaveRuntime }: { appCSSPath: string, distFolderName: string, appEntryTSPath: string, selectedEnclaveRuntime: enclaveRuntime }) {
     // Write all the package JSON scripts here
     let packageJSON = JSON.parse(fs.readFileSync("package.json", "utf-8")) as Object;
     let packageJSONScripts = (<any>packageJSON).scripts || {} as Object;
@@ -237,13 +237,13 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
         ["package", `npx tsx scripts/package.ts`],
     ]
 
-    if (enclaveType == "node") {
+    if (selectedEnclaveRuntime == "node") {
         scripts.push(["dev:start", `npx tsx -r dotenv/config server.ts`]);
         scripts.push(["start", `npx tsx server.ts`]); // This is in production
-    } else if (enclaveType == "golang") {
+    } else if (selectedEnclaveRuntime == "golang") {
         scripts.push(["dev:start", `go run .`]);
         scripts.push(["start", `go run .`]); // This is in production
-    } else if (enclaveType == "python") {
+    } else if (selectedEnclaveRuntime == "python") {
         scripts.push(["dev:start", `uv run server.py`]);
         scripts.push(["start", `uv run server.py`]); // This is in production
     }
@@ -520,18 +520,18 @@ export interface context {
     fs.writeFileSync(routerEntryTSPath, script.trim(), { flag: "w", flush: true });
 }
 
-async function createManifest({ appName, version, enclaveName, appIdentifier, enclaveType, selectedEntryPointManagement }: { appName: string, version: string, enclaveName: string, appIdentifier: string, enclaveType: enclaveTemplateType, selectedEntryPointManagement: entryPointManagement }) {
+async function createManifest({ appName, version, enclaveName, appIdentifier, selectedEnclaveRuntime, selectedEntryPointManagement }: { appName: string, version: string, enclaveName: string, appIdentifier: string, selectedEnclaveRuntime: enclaveRuntime, selectedEntryPointManagement: entryPointManagement }) {
     let startExec = "";
-    if (enclaveType == "node") {
+    if (selectedEnclaveRuntime == "node") {
         startExec = `npm start`;
-    } else if (enclaveType == "golang") {
+    } else if (selectedEnclaveRuntime == "golang") {
         startExec = `go run .`;
-    } else if (enclaveType == "python") {
+    } else if (selectedEnclaveRuntime == "python") {
         startExec = `uv run server.py`;
     }
     let manifest = `
 manifest_version: 1
-enclave_type: ${enclaveType}
+enclave_runtime: ${selectedEnclaveRuntime}
 app_version: ${version}
 app_name: ${appName}
 enclave_name: ${enclaveName}
@@ -543,14 +543,14 @@ resources:
         - resources/dist/img/logo.png
     folders: []`;
 
-    if (enclaveType == "node") {
+    if (selectedEnclaveRuntime == "node") {
         manifest += `
     files:
         - index.html
         - server.ts
         - utils.ts
     `
-    } else if (enclaveType == "golang") {
+    } else if (selectedEnclaveRuntime == "golang") {
         manifest += `
     files:
         - index.html
@@ -559,7 +559,7 @@ resources:
         - go.mod
         - go.sum
     `
-    } else if (enclaveType == "python") {
+    } else if (selectedEnclaveRuntime == "python") {
         manifest += `
     files:
         - index.html
@@ -606,16 +606,16 @@ def get_enclave_prefix(enclave_name: str) -> str:
     return f;
 }
 
-async function createTestServer({ enclaveType, enclaveName, entryPoint }: { enclaveType: enclaveTemplateType, enclaveName: string, entryPoint: entryPointManagement }) {
-    if (enclaveType == "node") {
+async function createTestServer({ selectedEnclaveRuntime, enclaveName, entryPoint }: { selectedEnclaveRuntime: enclaveRuntime, enclaveName: string, entryPoint: entryPointManagement }) {
+    if (selectedEnclaveRuntime == "node") {
         fs.copyFileSync(path.join(rootFolder, "server", "node", "server.ts"), "server.ts");
         fs.writeFileSync("utils.ts", getUtilsForNode(entryPoint).trim(), { flag: "w", flush: true });
-    } else if (enclaveType == "golang") {
+    } else if (selectedEnclaveRuntime == "golang") {
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "server.go"), "server.go");
         fs.writeFileSync("utils.go", getUtilsForGolang(entryPoint).trim(), { flag: "w", flush: true });
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.mod"), "go.mod");
         fs.copyFileSync(path.join(rootFolder, "server", "golang", "go.sum"), "go.sum");
-    } else if (enclaveType == "python") {
+    } else if (selectedEnclaveRuntime == "python") {
         fs.copyFileSync(path.join(rootFolder, "server", "python", "server.py"), "server.py");
         fs.writeFileSync("utils.py", getUtilsForPython(entryPoint).trim(), { flag: "w", flush: true });
         fs.copyFileSync(path.join(rootFolder, "server", "python", "pyproject.toml"), "pyproject.toml");
@@ -677,17 +677,17 @@ async function fixTSConfig() {
     fs.writeFileSync("tsconfig.json", JSON.stringify(parsedCommandLine, null, 4), { flag: "w", flush: true });
 }
 
-async function runPostSetupScripts({ enclaveType }: { enclaveType: enclaveTemplateType }) {
+async function runPostSetupScripts({ selectedEnclaveRuntime }: { selectedEnclaveRuntime: enclaveRuntime }) {
     // Run the first CSS build
     await spawnChildProcess("npm", ["run", "css:build"]);
     await spawnChildProcess("npm", ["run", "ui:build"]);
 
-    if (enclaveType == "node") {
+    if (selectedEnclaveRuntime == "node") {
 
-    } else if (enclaveType == "golang") {
+    } else if (selectedEnclaveRuntime == "golang") {
         await spawnChildProcess("go", ["mod", "tidy"]);
         await spawnChildProcess("goimports", ["-w", "."]);
-    } else if (enclaveType == "python") {
+    } else if (selectedEnclaveRuntime == "python") {
         await spawnChildProcess("uv", ["sync", "--all-groups"]);
     }
 }
@@ -716,7 +716,7 @@ async function main() {
     await spawnChildProcess("npm", ["init", "-y"]);
 
     await setupGitIgnore();
-    await setupDependencies({ enclaveType: selectedEnclaveTemplate });
+    await setupDependencies({ selectedEnclaveRuntime });
     await setupScripts();
 
     // Create the resources folder
@@ -729,12 +729,12 @@ async function main() {
     await createIndexHTML({ appName: applicationName, version, enclaveName: applicationIdentifier, selectedEntryPointManagement });
     await createEntryTS({ appEntryTSPath, enclaveName: applicationIdentifier, selectedEntryPointManagement });
     await createRouterTS({ routerEntryTSPath });
-    await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, enclaveType: selectedEnclaveTemplate, selectedEntryPointManagement });
-    await createTestServer({ enclaveType: selectedEnclaveTemplate, enclaveName: applicationIdentifier, entryPoint: selectedEntryPointManagement });
+    await createManifest({ appName: applicationName, version, enclaveName: applicationIdentifier, appIdentifier: `${applicationIdentifier}.enc`, selectedEnclaveRuntime, selectedEntryPointManagement });
+    await createTestServer({ selectedEnclaveRuntime, enclaveName: applicationIdentifier, entryPoint: selectedEntryPointManagement });
 
-    await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, enclaveType: selectedEnclaveTemplate });
+    await createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, selectedEnclaveRuntime });
     await fixTSConfig();
-    await runPostSetupScripts({ enclaveType: selectedEnclaveTemplate });
+    await runPostSetupScripts({ selectedEnclaveRuntime });
     console.log("Your app is ready! What are you going to build?");
 }
 
