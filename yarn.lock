@@ -496,10 +496,10 @@
     wrap-ansi "^8.1.0"
     wrap-ansi-cjs "npm:wrap-ansi@^7.0.0"
 
-"@kernelminds/scailo-sdk@^0.1.10":
-  version "0.1.10"
-  resolved "https://registry.yarnpkg.com/@kernelminds/scailo-sdk/-/scailo-sdk-0.1.10.tgz#a190ad9ebd8d05aeb4614808915e3d7506f57187"
-  integrity sha512-Nud6ypyTHKKRebRGKAW37iCIbOkisq+Ly5aua6HrZsUhi+IKqQVNh9My+eHDC6/mM6bbg8bhxv563pfh5ATVaQ==
+"@kernelminds/scailo-sdk@^0.1.11":
+  version "0.1.11"
+  resolved "https://registry.yarnpkg.com/@kernelminds/scailo-sdk/-/scailo-sdk-0.1.11.tgz#abc7d190a08041719238a9e1102afc1846af44dc"
+  integrity sha512-KmCfpPdwt1X0Rc8a298kK6PexYqYYHPOdGqmFVZr68IMUJ1ki9Vu9ek6rGQ4OE8mwQ2pS9NmaiJknMy8XeEl9g==
   dependencies:
     "@bufbuild/buf" "^1.25.1"
     "@bufbuild/protobuf" "1.10.0"

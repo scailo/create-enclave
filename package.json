@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.6",
-    "@kernelminds/scailo-sdk": "^0.1.10",
+    "@kernelminds/scailo-sdk": "^0.1.11",
     "favicons": "^7.2.0",
     "typescript": "^5.9.3"
   }
