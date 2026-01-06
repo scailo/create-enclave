@@ -95,6 +95,15 @@ async function generateSimpleFavicon({ sourceFile, outputDir, fileName }: { sour
     }
 }
 
+interface MANIFEST_ENV {
+    /**The name of the environment variable */
+    name: string;
+    /**The value of the environment variable */
+    value: string;
+    /**Stores if the environment variable is a secret */
+    is_secret: boolean;
+}
+
 interface MANIFEST {
     manifest_version: string;
     enclave_runtime: "node" | "golang" | "python";
@@ -104,6 +113,7 @@ interface MANIFEST {
     app_unique_identifier: string;
     start_exec: string;
     entry_point_management: "platform_redirect" | "direct_url";
+    env_variables: MANIFEST_ENV[];
     resources: {
         logos: string[];
         folders: string[];

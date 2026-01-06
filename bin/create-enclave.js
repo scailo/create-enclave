@@ -427,7 +427,7 @@ function createManifest(_a) {
             else if (selectedEnclaveRuntime == "python") {
                 startExec = "uv run server.py";
             }
-            manifest = "\nmanifest_version: 1\nenclave_runtime: ".concat(selectedEnclaveRuntime, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nentry_point_management: \"").concat(selectedEntryPointManagement, "\"\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
+            manifest = "\nmanifest_version: 1\nenclave_runtime: ".concat(selectedEnclaveRuntime, "\napp_version: ").concat(version, "\napp_name: ").concat(appName, "\nenclave_name: ").concat(enclaveName, "\napp_unique_identifier: \"").concat(appIdentifier, "\"\nstart_exec: \"").concat(startExec, "\"\nentry_point_management: \"").concat(selectedEntryPointManagement, "\"\nenv_variables:\n    - name: APP_NAME\n      value: \"").concat(appName, "\"\n      is_secret: false\n    - name: ENCLAVE_NAME\n      value: \"").concat(enclaveName, "\"\n      is_secret: false\n    - name: APP_UNIQUE_IDENTIFIER\n      value: \"").concat(appIdentifier, "\"\n      is_secret: false\nresources:\n    logos:\n        - resources/dist/img/logo.png\n    folders: []");
             if (selectedEnclaveRuntime == "node") {
                 manifest += "\n    files:\n        - index.html\n        - server.ts\n        - utils.ts\n    ";
             }

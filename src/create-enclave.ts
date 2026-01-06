@@ -538,6 +538,16 @@ enclave_name: ${enclaveName}
 app_unique_identifier: "${appIdentifier}"
 start_exec: "${startExec}"
 entry_point_management: "${selectedEntryPointManagement}"
+env_variables:
+    - name: APP_NAME
+      value: "${appName}"
+      is_secret: false
+    - name: ENCLAVE_NAME
+      value: "${enclaveName}"
+      is_secret: false
+    - name: APP_UNIQUE_IDENTIFIER
+      value: "${appIdentifier}"
+      is_secret: false
 resources:
     logos:
         - resources/dist/img/logo.png
