@@ -63,8 +63,8 @@ var child_process = require("child_process");
 var ts = require("typescript");
 var prompt = require("@inquirer/prompts");
 var crypto = require("crypto");
-var applicationIdentifier = "scailo-test-widget";
-var applicationName = "Scailo Test Widget";
+var applicationIdentifier = "scailo-test-enclave";
+var applicationName = "Scailo Test Enclave";
 var version = "0.0.1";
 var rootFolder = path.dirname(__dirname);
 var selectedEnclaveRuntime = "node";
@@ -81,6 +81,7 @@ function acceptUserInputs() {
                     })];
                 case 1:
                     applicationName = (_a.sent()).trim();
+                    applicationIdentifier = applicationName.split(" ").join("-").toLowerCase();
                     return [4 /*yield*/, prompt.input({
                             message: "Enter the Application Identifier: ",
                             default: applicationIdentifier,
@@ -393,7 +394,7 @@ function createEntryTS(_a) {
         var script;
         var appEntryTSPath = _b.appEntryTSPath, enclaveName = _b.enclaveName, selectedEntryPointManagement = _b.selectedEntryPointManagement;
         return __generator(this, function (_c) {
-            script = "\nimport { createConnectTransport } from \"@connectrpc/connect-web\";\nimport { Router } from \"./router\";\n\nexport const enclaveName = \"".concat(enclaveName, "\";\n\n/**\n * Message handler type for Scailo widget. Receives messages from the parent application\n */\nexport type ScailoWidgetMessage = {\n    type: \"refresh\",\n    payload: any\n};\n\n/**\n * Message handler for Scailo widget\n */\nwindow.addEventListener(\"message\", (evt: MessageEvent<ScailoWidgetMessage>) => {\n    if (evt.data.type == \"refresh\") {\n        location.reload();\n    }\n});\n\nasync function wait(ms: number) {\n    return new Promise(resolve => setTimeout(resolve, ms));\n}\n\n/** Starts the router  */\nfunction startRouter() {\n    let r = new Router();\n    const routePrefix = ").concat(selectedEntryPointManagement == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``", ";\n    r.add(`${routePrefix}/ui`, async (ctx) => {\n        const container = document.getElementById(\"container\") as HTMLDivElement;\n        while (true) {\n            await wait(1000);\n            let payload = await (await fetch(`${routePrefix}/api/random`, { method: \"GET\", headers: { \"Content-Type\": \"application/json\" } })).json() as { random: number };\n            container.innerHTML = payload.random.toString();\n        }\n    });\n\n    r.add(`${routePrefix}/404`, async (ctx) => {\n        handlePageNotFound(ctx);\n    });\n\n    r.setDefault((ctx) => {\n        location.href = `${routePrefix}/ui`;\n    });\n\n    r.start();\n}\n\n/** Handles page not found */\nfunction handlePageNotFound(ctx: any) {\n    let content = <HTMLDivElement>document.getElementById(\"container\");\n    content.innerHTML = \"Invalid page\";\n}\n\nwindow.addEventListener(\"load\", async (evt) => {\n    evt.preventDefault();\n    startRouter();\n});\n\nexport function getReadTransport() {\n    return createConnectTransport({\n        // Need to use binary format (at least for the time being)\n        baseUrl: location.origin, useBinaryFormat: false, interceptors: []\n    });\n}\n");
+            script = "\nimport { createConnectTransport } from \"@connectrpc/connect-web\";\nimport { Router } from \"./router\";\n\nexport const enclaveName = \"".concat(enclaveName, "\";\n\n/**\n * Message handler type for Scailo enclave. Receives messages from the parent application\n */\nexport type ScailoEnclaveMessage = {\n    type: \"refresh\",\n    payload: any\n};\n\n/**\n * Message handler for Scailo enclave\n */\nwindow.addEventListener(\"message\", (evt: MessageEvent<ScailoEnclaveMessage>) => {\n    if (evt.data.type == \"refresh\") {\n        location.reload();\n    }\n});\n\nasync function wait(ms: number) {\n    return new Promise(resolve => setTimeout(resolve, ms));\n}\n\n/** Starts the router  */\nfunction startRouter() {\n    let r = new Router();\n    const routePrefix = ").concat(selectedEntryPointManagement == "platform_redirect" ? "\`/enclave/\${enclaveName}\`" : "``", ";\n    r.add(`${routePrefix}/ui`, async (ctx) => {\n        const container = document.getElementById(\"container\") as HTMLDivElement;\n        while (true) {\n            await wait(1000);\n            let payload = await (await fetch(`${routePrefix}/api/random`, { method: \"GET\", headers: { \"Content-Type\": \"application/json\" } })).json() as { random: number };\n            container.innerHTML = payload.random.toString();\n        }\n    });\n\n    r.add(`${routePrefix}/404`, async (ctx) => {\n        handlePageNotFound(ctx);\n    });\n\n    r.setDefault((ctx) => {\n        location.href = `${routePrefix}/ui`;\n    });\n\n    r.start();\n}\n\n/** Handles page not found */\nfunction handlePageNotFound(ctx: any) {\n    let content = <HTMLDivElement>document.getElementById(\"container\");\n    content.innerHTML = \"Invalid page\";\n}\n\nwindow.addEventListener(\"load\", async (evt) => {\n    evt.preventDefault();\n    startRouter();\n});\n\nexport function getReadTransport() {\n    return createConnectTransport({\n        // Need to use binary format (at least for the time being)\n        baseUrl: location.origin, useBinaryFormat: false, interceptors: []\n    });\n}\n");
             // Create index.ts
             fs.writeFileSync(appEntryTSPath, script.trim(), { flag: "w", flush: true });
             return [2 /*return*/];

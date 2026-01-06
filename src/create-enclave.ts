@@ -7,8 +7,8 @@ import ts = require('typescript');
 import prompt = require('@inquirer/prompts');
 import crypto = require("crypto");
 
-let applicationIdentifier = "scailo-test-widget";
-let applicationName = "Scailo Test Widget";
+let applicationIdentifier = "scailo-test-enclave";
+let applicationName = "Scailo Test Enclave";
 
 let version = "0.0.1";
 const rootFolder = path.dirname(__dirname);
@@ -27,6 +27,7 @@ async function acceptUserInputs() {
         validate: input => input.length > 0
     })).trim();
 
+    applicationIdentifier = applicationName.split(" ").join("-").toLowerCase();
     applicationIdentifier = (await prompt.input({
         message: "Enter the Application Identifier: ",
         default: applicationIdentifier,
@@ -297,17 +298,17 @@ import { Router } from "./router";
 export const enclaveName = "${enclaveName}";
 
 /**
- * Message handler type for Scailo widget. Receives messages from the parent application
+ * Message handler type for Scailo enclave. Receives messages from the parent application
  */
-export type ScailoWidgetMessage = {
+export type ScailoEnclaveMessage = {
     type: "refresh",
     payload: any
 };
 
 /**
- * Message handler for Scailo widget
+ * Message handler for Scailo enclave
  */
-window.addEventListener("message", (evt: MessageEvent<ScailoWidgetMessage>) => {
+window.addEventListener("message", (evt: MessageEvent<ScailoEnclaveMessage>) => {
     if (evt.data.type == "refresh") {
         location.reload();
     }
