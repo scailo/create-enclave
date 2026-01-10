@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 
@@ -227,7 +228,11 @@ func getGRPCConnection() *grpc.ClientConn {
 		creds = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, getServerURL()))
 	}
 
-	conn, err := grpc.NewClient(getServerURL(), creds)
+	conn, err := grpc.NewClient(getServerURL(), creds, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time:                10 * time.Second, // Ping every 10s if idle
+		Timeout:             time.Second,      // Wait 1s for response
+		PermitWithoutStream: true,             // Ping even if there are no active RPCs
+	}))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
