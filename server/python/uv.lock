@@ -616,7 +616,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=46.0.3" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "redis", specifier = ">=7.1.0" },
-    { name = "scailo-sdk", specifier = ">=0.2.9" },
+    { name = "scailo-sdk", specifier = ">=0.2.11" },
 ]
 
 [[package]]
@@ -639,7 +639,7 @@ wheels = [
 
 [[package]]
 name = "scailo-sdk"
-version = "0.2.9"
+version = "0.2.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohappyeyeballs" },
@@ -675,9 +675,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/90/d8/f85b3f69a53d9ad4a7db1d06a67b11f78868d450d8049f11c8169a2dbd9f/scailo_sdk-0.2.9.tar.gz", hash = "sha256:5fc7809cbdc8e9c4e1bf1fb8ae8d55c1ffd8a3ac7e3ddca3c3249068dd638e49", size = 1245872, upload-time = "2025-12-30T20:48:26.177Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/e7/cedf0c04203b94bfeca11fb6a00076714a384985cba03892d0905951cba2/scailo_sdk-0.2.11.tar.gz", hash = "sha256:0213a3874dc138a8f4c5e5513baec923908d9f16cad2a9bc616c3057db471127", size = 1240968, upload-time = "2026-01-12T14:12:20.483Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/15/6ddc1b0438e8529508006f54a05417bcfaa9aaac99559bed1c8952500ab9/scailo_sdk-0.2.9-py3-none-any.whl", hash = "sha256:c3cee37e8d2691b450dc52d384eb80c43b57f07b797b152b08e9d5ef6d78a406", size = 1360741, upload-time = "2025-12-30T20:48:24.225Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/c4/913b06dd44477027be43735908699af2acc74e7cf617fbe379e8978495c6/scailo_sdk-0.2.11-py3-none-any.whl", hash = "sha256:4b1832ca811fb96b5d5f7d30fadd4a3f485f41df715cbbfe57a1f5223feb2f78", size = 1354890, upload-time = "2026-01-12T14:12:18.666Z" },
 ]
 
 [[package]]
