@@ -1,6 +1,6 @@
 {
   "name": "@kernelminds/create-enclave",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "🚀 The official Scailo starter framework. Instantly scaffold a complete, dependency-ready starter project that could be deployed as an application or a widget on Scailo.",
   "main": "index.js",
   "repository": "https://github.com/scailo/create-enclave",
