@@ -228,11 +228,16 @@ func getGRPCConnection() *grpc.ClientConn {
 		creds = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, getServerURL()))
 	}
 
+	// Max Message Size is 64MB
+	const maxMessageSize = 64 * 1024 * 1024
 	conn, err := grpc.NewClient(getServerURL(), creds, grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:                10 * time.Second, // Ping every 10s if idle
 		Timeout:             time.Second,      // Wait 1s for response
 		PermitWithoutStream: true,             // Ping even if there are no active RPCs
-	}))
+	}), grpc.WithDefaultCallOptions(
+		grpc.MaxCallRecvMsgSize(maxMessageSize),
+		grpc.MaxCallSendMsgSize(maxMessageSize),
+	))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
