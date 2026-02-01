@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/scailo/go-sdk"
@@ -379,6 +380,9 @@ func main() {
 
 	// Initialize Gin
 	router := gin.Default()
+
+	// Enable gzip compression with default compression level
+	router.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	// --- 1. Register Static Routes ---
 	router.Static(fmt.Sprintf("%s/resources/dist", enclavePrefix), filepath.Join("resources", "dist"))

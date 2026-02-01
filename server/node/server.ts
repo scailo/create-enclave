@@ -1,4 +1,5 @@
 import Fastify, { FastifyReply, FastifyRequest } from "fastify";
+import fastifyCompress from '@fastify/compress';
 import fastifyStatic from "@fastify/static";
 import * as path from "path";
 import * as fs from "fs";
@@ -88,6 +89,10 @@ const server = Fastify({
             target: 'pino-pretty'
         }
     }
+});
+server.register(fastifyCompress, {
+    global: true,
+    threshold: 1024,
 });
 const loginClient = getScailoClientForLoginService(transport);
 const vaultClient = getScailoClientForVaultService(transport);

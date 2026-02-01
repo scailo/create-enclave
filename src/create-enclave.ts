@@ -160,7 +160,8 @@ async function setupDependenciesForNode() {
         "dotenv",
         "redis@4.7.0",
         "@fastify/cookie@9.4.0",
-        "pino-pretty@13.1.2"
+        "pino-pretty@13.1.2",
+        "@fastify/compress@7.0.3"
     ]
 
     await spawnChildProcess("npm", ["install", ...npmDependencies, "--save"]);
