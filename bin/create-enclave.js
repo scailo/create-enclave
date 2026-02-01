@@ -65,7 +65,7 @@ var prompt = require("@inquirer/prompts");
 var crypto = require("crypto");
 var applicationIdentifier = "scailo-test-enclave";
 var applicationName = "Scailo Test Enclave";
-var version = "0.0.1";
+var version = "0.0.0";
 var rootFolder = path.dirname(__dirname);
 var selectedEnclaveRuntime = "node";
 var selectedEntryPointManagement = "platform_redirect";
@@ -256,7 +256,8 @@ function setupDependenciesForNode() {
                         "dotenv",
                         "redis@4.7.0",
                         "@fastify/cookie@9.4.0",
-                        "pino-pretty@13.1.2"
+                        "pino-pretty@13.1.2",
+                        "@fastify/compress@7.0.3"
                     ];
                     return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDependencies, true), ["--save"], false))];
                 case 2:

@@ -10,7 +10,7 @@ import crypto = require("crypto");
 let applicationIdentifier = "scailo-test-enclave";
 let applicationName = "Scailo Test Enclave";
 
-let version = "0.0.1";
+let version = "0.0.0";
 const rootFolder = path.dirname(__dirname);
 
 type enclaveRuntime = "node" | "golang" | "python";
