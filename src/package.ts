@@ -9,19 +9,61 @@ import semver = require("semver");
 import AdmZip = require("adm-zip");
 import favicons = require("favicons");
 
+let manifestFile = "MANIFEST.yaml";
+let distFolder = "dist";
+let nextVersion = "";
+
 async function loadManifest() {
-    const file = fs.readFileSync('MANIFEST.yaml', 'utf8')
+    const file = fs.readFileSync(manifestFile, 'utf8')
     return YAML.parse(file);
 }
 
+// Supports both --key=value and --key value formats
+function parseArgs() {
+    const args = process.argv.slice(2);
+
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i] || "";
+        let key = "", value = "";
+
+        // Check for the "=" syntax
+        if (arg.includes('=')) {
+            const parts = arg.split('=');
+            key = parts[0] || "";
+            value = parts[1] || "";
+        } else {
+            key = arg;
+            value = args[i + 1] || "";
+            // Move index forward because we are consuming the next element as a value
+            i++;
+        }
+
+        // Helper to check for specific flags
+        const isFlag = (long: string, short: string) => key === long || key === short;
+
+        if (isFlag('--manifest', '-m')) {
+            manifestFile = value || "MANIFEST.yaml";
+        } else if (isFlag('--dist', '-d')) {
+            distFolder = value || "dist";
+        } else if (isFlag('--version', '-v')) {
+            nextVersion = value || "";
+        }
+    }
+}
+
 async function acceptUserInputs({ existingVersion }: { existingVersion: string }) {
-    let nextVersion = semver.inc(existingVersion, "patch") || "0.0.1";
-    const userEnteredVersion = (await prompt.input({
-        message: "Current version: " + existingVersion + ". Enter the Next Version (Semver Format): ",
-        default: nextVersion,
-        required: true,
-        validate: input => input.length > 0
-    })).trim();
+    let userEnteredVersion = "";
+    if (nextVersion.length > 0) {
+        userEnteredVersion = nextVersion;
+    } else {
+        nextVersion = semver.inc(existingVersion, "patch") || "0.0.1";
+        userEnteredVersion = (await prompt.input({
+            message: "Current version: " + existingVersion + ". Enter the Next Version (Semver Format): ",
+            default: nextVersion,
+            required: true,
+            validate: input => input.length > 0
+        })).trim();
+    }
 
     if (!semver.valid(userEnteredVersion)) {
         console.log("Invalid semver: " + userEnteredVersion);
@@ -123,6 +165,7 @@ interface MANIFEST {
 
 
 async function main() {
+    parseArgs();
     let manifest: MANIFEST = await loadManifest();
     let userEnteredVersion = await acceptUserInputs({ existingVersion: manifest.app_version });
     if (manifest.entry_point_management !== "platform_redirect" && manifest.entry_point_management !== "direct_url") {
@@ -131,7 +174,7 @@ async function main() {
     }
 
     manifest.app_version = userEnteredVersion;
-    fs.writeFileSync('MANIFEST.yaml', YAML.stringify(manifest, { indent: 4 }));
+    fs.writeFileSync(manifestFile, YAML.stringify(manifest, { indent: 4 }));
 
     // Create the favicon here
     await generateSimpleFavicon({ sourceFile: path.join("resources", "dist", "img", "logo.png"), outputDir: path.join("resources", "dist", "img"), fileName: "favicon.ico" });
@@ -139,7 +182,7 @@ async function main() {
     await spawnChildProcess("npm", ["run", "css:build"]);
     await spawnChildProcess("npm", ["run", "ui:build"]);
     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
-    fs.copyFileSync("MANIFEST.yaml", path.join("artifacts", "MANIFEST.yaml"));
+    fs.copyFileSync(manifestFile, path.join("artifacts", "MANIFEST.yaml"));
 
     fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });
 
@@ -161,6 +204,8 @@ async function main() {
         }
     }
 
+    const currDir = process.cwd();
+
     process.chdir("artifacts");
     // Zip the folder
     const zip = new AdmZip();
@@ -168,9 +213,13 @@ async function main() {
     zip.addLocalFolder(process.cwd());
     process.chdir("..");
 
+    fs.rmSync(path.join(distFolder), { recursive: true, force: true });
+    fs.mkdirSync(path.join(distFolder), { recursive: true });
+    process.chdir(distFolder);
     const outputName = `${manifest.app_name}.enc`;
 
     zip.writeZip(outputName);
+    process.chdir(currDir);
     fs.rmSync(path.join("artifacts"), { recursive: true });
 
     console.log(`Successfully package: ${outputName} (${userEnteredVersion})`);

@@ -56,22 +56,67 @@ var fs = require("fs");
 var semver = require("semver");
 var AdmZip = require("adm-zip");
 var favicons = require("favicons");
+var manifestFile = "MANIFEST.yaml";
+var distFolder = "dist";
+var nextVersion = "";
 function loadManifest() {
     return __awaiter(this, void 0, void 0, function () {
         var file;
         return __generator(this, function (_a) {
-            file = fs.readFileSync('MANIFEST.yaml', 'utf8');
+            file = fs.readFileSync(manifestFile, 'utf8');
             return [2 /*return*/, YAML.parse(file)];
         });
     });
 }
+// Supports both --key=value and --key value formats
+function parseArgs() {
+    var args = process.argv.slice(2);
+    var _loop_1 = function (i) {
+        var arg = args[i] || "";
+        var key = "", value = "";
+        // Check for the "=" syntax
+        if (arg.includes('=')) {
+            var parts = arg.split('=');
+            key = parts[0] || "";
+            value = parts[1] || "";
+        }
+        else {
+            key = arg;
+            value = args[i + 1] || "";
+            // Move index forward because we are consuming the next element as a value
+            i++;
+        }
+        // Helper to check for specific flags
+        var isFlag = function (long, short) { return key === long || key === short; };
+        if (isFlag('--manifest', '-m')) {
+            manifestFile = value || "MANIFEST.yaml";
+        }
+        else if (isFlag('--dist', '-d')) {
+            distFolder = value || "dist";
+        }
+        else if (isFlag('--version', '-v')) {
+            nextVersion = value || "";
+        }
+        out_i_1 = i;
+    };
+    var out_i_1;
+    for (var i = 0; i < args.length; i++) {
+        _loop_1(i);
+        i = out_i_1;
+    }
+}
 function acceptUserInputs(_a) {
     return __awaiter(this, arguments, void 0, function (_b) {
-        var nextVersion, userEnteredVersion;
+        var userEnteredVersion;
         var existingVersion = _b.existingVersion;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
+                    userEnteredVersion = "";
+                    if (!(nextVersion.length > 0)) return [3 /*break*/, 1];
+                    userEnteredVersion = nextVersion;
+                    return [3 /*break*/, 3];
+                case 1:
                     nextVersion = semver.inc(existingVersion, "patch") || "0.0.1";
                     return [4 /*yield*/, prompt.input({
                             message: "Current version: " + existingVersion + ". Enter the Next Version (Semver Format): ",
@@ -79,8 +124,10 @@ function acceptUserInputs(_a) {
                             required: true,
                             validate: function (input) { return input.length > 0; }
                         })];
-                case 1:
+                case 2:
                     userEnteredVersion = (_c.sent()).trim();
+                    _c.label = 3;
+                case 3:
                     if (!semver.valid(userEnteredVersion)) {
                         console.log("Invalid semver: " + userEnteredVersion);
                         process.exit(1);
@@ -165,10 +212,12 @@ function generateSimpleFavicon(_a) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var manifest, userEnteredVersion, foldersToCopy, _i, foldersToCopy_1, folder, filesToCopy, _a, filesToCopy_1, file, zip, outputName;
+        var manifest, userEnteredVersion, foldersToCopy, _i, foldersToCopy_1, folder, filesToCopy, _a, filesToCopy_1, file, currDir, zip, outputName;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, loadManifest()];
+                case 0:
+                    parseArgs();
+                    return [4 /*yield*/, loadManifest()];
                 case 1:
                     manifest = _b.sent();
                     return [4 /*yield*/, acceptUserInputs({ existingVersion: manifest.app_version })];
@@ -179,7 +228,7 @@ function main() {
                         process.exit(1);
                     }
                     manifest.app_version = userEnteredVersion;
-                    fs.writeFileSync('MANIFEST.yaml', YAML.stringify(manifest, { indent: 4 }));
+                    fs.writeFileSync(manifestFile, YAML.stringify(manifest, { indent: 4 }));
                     // Create the favicon here
                     return [4 /*yield*/, generateSimpleFavicon({ sourceFile: path.join("resources", "dist", "img", "logo.png"), outputDir: path.join("resources", "dist", "img"), fileName: "favicon.ico" })];
                 case 3:
@@ -192,7 +241,7 @@ function main() {
                 case 5:
                     _b.sent();
                     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
-                    fs.copyFileSync("MANIFEST.yaml", path.join("artifacts", "MANIFEST.yaml"));
+                    fs.copyFileSync(manifestFile, path.join("artifacts", "MANIFEST.yaml"));
                     fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });
                     fs.copyFileSync("package.json", path.join("artifacts", "package.json"));
                     fs.copyFileSync("package-lock.json", path.join("artifacts", "package-lock.json"));
@@ -211,12 +260,17 @@ function main() {
                             fs.copyFileSync(file, path.join("artifacts", file));
                         }
                     }
+                    currDir = process.cwd();
                     process.chdir("artifacts");
                     zip = new AdmZip();
                     zip.addLocalFolder(process.cwd());
                     process.chdir("..");
+                    fs.rmSync(path.join(distFolder), { recursive: true, force: true });
+                    fs.mkdirSync(path.join(distFolder), { recursive: true });
+                    process.chdir(distFolder);
                     outputName = "".concat(manifest.app_name, ".enc");
                     zip.writeZip(outputName);
+                    process.chdir(currDir);
                     fs.rmSync(path.join("artifacts"), { recursive: true });
                     console.log("Successfully package: ".concat(outputName, " (").concat(userEnteredVersion, ")"));
                     return [2 /*return*/];
