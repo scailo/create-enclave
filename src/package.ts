@@ -181,6 +181,7 @@ async function main() {
 
     await spawnChildProcess("npm", ["run", "css:build"]);
     await spawnChildProcess("npm", ["run", "ui:build"]);
+    await spawnChildProcess("npm", ["run", "compress"]);
     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
     fs.copyFileSync(manifestFile, path.join("artifacts", "MANIFEST.yaml"));
 

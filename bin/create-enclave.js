@@ -197,6 +197,7 @@ function setupCommonNPMDependencies() {
                         "typescript",
                         "@types/node",
                         "favicons",
+                        "gzipper@8.2.1",
                     ];
                     return [4 /*yield*/, spawnChildProcess("npm", __spreadArray(__spreadArray(["install"], npmDevDependencies, true), ["--save-dev"], false))];
                 case 2:
@@ -353,6 +354,7 @@ function createBuildScripts(_a) {
                 ["ui:watch", "npx esbuild ".concat(appEntryTSPath, " --bundle --outfile=").concat(path.join(distFolderName, "js", "bundle.src.min.js"), " --watch")],
                 ["dev:watch", "npx concurrently \"npm run ui:watch\" \"npm run css:watch\""],
                 ["package", "npx tsx scripts/package.ts"],
+                ["compress", "gzipper compress ".concat(distFolderName, " --include js,css,ico --brotli --gzip")]
             ];
             if (selectedEnclaveRuntime == "node") {
                 scripts.push(["dev:start", "npx tsx -r dotenv/config server.ts"]);

@@ -131,6 +131,7 @@ async function setupCommonNPMDependencies() {
         "typescript",
         "@types/node",
         "favicons",
+        "gzipper@8.2.1",
     ];
 
     await spawnChildProcess("npm", ["install", ...npmDevDependencies, "--save-dev"]);
@@ -237,6 +238,8 @@ async function createBuildScripts({ appCSSPath, distFolderName, appEntryTSPath, 
         ["dev:watch", `npx concurrently "npm run ui:watch" "npm run css:watch"`],
 
         ["package", `npx tsx scripts/package.ts`],
+
+        ["compress", `gzipper compress ${distFolderName} --include js,css,ico --brotli --gzip`]
     ]
 
     if (selectedEnclaveRuntime == "node") {

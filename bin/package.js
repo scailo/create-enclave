@@ -240,6 +240,9 @@ function main() {
                     return [4 /*yield*/, spawnChildProcess("npm", ["run", "ui:build"])];
                 case 5:
                     _b.sent();
+                    return [4 /*yield*/, spawnChildProcess("npm", ["run", "compress"])];
+                case 6:
+                    _b.sent();
                     fs.mkdirSync(path.join("artifacts", "resources"), { recursive: true });
                     fs.copyFileSync(manifestFile, path.join("artifacts", "MANIFEST.yaml"));
                     fs.cpSync(path.join("resources", "dist"), path.join("artifacts", "resources", "dist"), { recursive: true });
