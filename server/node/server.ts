@@ -137,6 +137,14 @@ server.register(fastifyStatic, {
     root: path.join(process.cwd(), 'resources', 'dist'),
     prefix: `${enclavePrefix}/resources/dist`, // optional: default '/'
     decorateReply: false,
+    setHeaders: (res, path) => {
+        // If the request contains a version query or is in the dist folder
+        if (path.includes('.min.js') || path.includes('.min.css')) {
+            // Cache for 1 year, and mark as immutable
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+    },
+    preCompressed: true,
     constraints: {} // optional: default {}
 });
 
