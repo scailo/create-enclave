@@ -7,10 +7,12 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gin-contrib/gzip"
@@ -70,6 +72,23 @@ const (
 func init() {
 	// Initialize the random number generator
 	// rand.Seed(time.Now().UnixNano())
+}
+
+// handleShutdown is your custom event handler
+func handleShutdown(sig os.Signal) {
+	fmt.Printf("\n[Event Handler] Received signal: %v\n", sig)
+	fmt.Println("[Event Handler] Starting 30-second wait period before exit...")
+
+	// Create a countdown or just sleep
+	// In K8s, this gives the network mesh/load balancer time to stop sending traffic
+	if production {
+		time.Sleep(30 * time.Second)
+	} else {
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	fmt.Println("[Event Handler] Wait complete. Exiting process now.")
+	os.Exit(0)
 }
 
 // loadConfig reads and validates environment variables.
@@ -496,7 +515,17 @@ func main() {
 	address := fmt.Sprintf("0.0.0.0:%d", GlobalConfig.Port)
 	log.Printf("Listening on address %s with Production: %t", address, production)
 
-	if err := router.Run(address); err != nil {
-		log.Fatalf("Server failed to start: %v", err)
-	}
+	go func() {
+		if err := router.Run(address); err != nil {
+			log.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Block here until we get a signal
+	sig := <-sigChan
+
+	handleShutdown(sig)
 }
