@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -374,6 +375,52 @@ func getNewContextForAuthToken(authToken string) context.Context {
 	return metadata.NewOutgoingContext(ctx, md)
 }
 
+// Create a pool to recycle byte buffers
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
+type bodyLogWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyLogWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+func ErrorLoggerMiddleware() gin.HandlerFunc {
+	logger := log.New(os.Stdout, "[HTTP-ERROR] ", log.LstdFlags)
+
+	return func(c *gin.Context) {
+		startTime := time.Now()
+
+		// Fetch a buffer from the pool (no new allocation most of the time)
+		buf := bufferPool.Get().(*bytes.Buffer)
+		buf.Reset()               // Ensure it's empty
+		defer bufferPool.Put(buf) // Put it back when the request is done
+
+		blw := &bodyLogWriter{
+			body:           buf,
+			ResponseWriter: c.Writer,
+		}
+		c.Writer = blw
+
+		c.Next()
+
+		statusCode := c.Writer.Status()
+		if statusCode < 200 || statusCode >= 300 {
+			latency := time.Since(startTime)
+			logger.Printf("| %d | %13v | %s %s\nResponse Body: %s",
+				statusCode, latency, c.Request.Method, c.Request.URL.Path, blw.body.String(),
+			)
+		}
+	}
+}
+
 // main entry point
 func main() {
 	loadConfig()
@@ -402,6 +449,7 @@ func main() {
 
 	// Enable gzip compression with default compression level
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
+	router.Use(ErrorLoggerMiddleware())
 
 	// --- 1. Register Static Routes ---
 	router.Static(fmt.Sprintf("%s/resources/dist", enclavePrefix), filepath.Join("resources", "dist"))
