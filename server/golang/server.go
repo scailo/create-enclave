@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/scailo/go-sdk"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -421,6 +422,60 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 	}
 }
 
+// client tracks the limiter and the last time it was seen
+type client struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
+}
+
+var (
+	clients = make(map[string]*client)
+)
+
+// Run this in the background to remove old entries from the map
+func init() {
+	go cleanupClients()
+}
+
+func cleanupClients() {
+	for {
+		time.Sleep(time.Minute)
+		mu.Lock()
+		for ip, c := range clients {
+			if time.Since(c.lastSeen) > 5*time.Minute {
+				delete(clients, ip)
+			}
+		}
+		mu.Unlock()
+	}
+}
+
+func RateLimiter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		mu.Lock()
+
+		if _, found := clients[ip]; !found {
+			// rate.Limit(50) = 50 requests per second
+			// 50 = burst (max tokens the bucket can hold)
+			clients[ip] = &client{
+				limiter: rate.NewLimiter(rate.Limit(50), 50),
+			}
+		}
+
+		clients[ip].lastSeen = time.Now()
+		if !clients[ip].limiter.Allow() {
+			mu.Unlock()
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"error": "Too many requests. Limit is 50 RPS.",
+			})
+			return
+		}
+		mu.Unlock()
+		c.Next()
+	}
+}
+
 // main entry point
 func main() {
 	loadConfig()
@@ -446,6 +501,8 @@ func main() {
 
 	// Initialize Gin
 	router := gin.Default()
+	// Apply to all routes
+	router.Use(RateLimiter())
 
 	// Enable gzip compression with default compression level
 	router.Use(gzip.Gzip(gzip.DefaultCompression))

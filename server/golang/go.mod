@@ -1,6 +1,6 @@
 module enclave
 
-go 1.24.4
+go 1.25.0
 
 require (
 	github.com/gin-contrib/gzip v1.2.5
@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/joho/godotenv v1.5.1
 	github.com/scailo/go-sdk v0.1.23
+	golang.org/x/time v0.15.0
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
 )
